@@ -1,0 +1,25 @@
+{
+  "name": "new-tabnews",
+  "version": "1.0.0",
+  "description": "A new implementation for tabnews",
+  "homepage": "https://github.com/cristianofmc/new-tabnews#readme",
+  "bugs": {
+    "url": "https://github.com/cristianofmc/new-tabnews/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cristianofmc/new-tabnews.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev"
+  },
+  "dependencies": {
+    "next": "16.1.1",
+    "react": "19.2",
+    "react-dom": "19.2"
+  }
+}
