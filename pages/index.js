@@ -7,7 +7,7 @@ function Home(){
         <div>
             <h3>Você tem uma mensagem especial:</h3>
             <dialog id="dial">
-                Eu te amo Arlene, de: Felipe
+                De: Felipe, para: Arlene; eu te amo!
             </dialog>
 
             <button onClick={message}>Ver mensagem</button>
