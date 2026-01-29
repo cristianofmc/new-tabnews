@@ -21,3 +21,16 @@ test("GET to /api/v1/status data must have 'updated_at' key with value in ISO", 
   expect(date.toString()).not.toBe("Invalid Date");
   expect(body.updated_at).toBe(date.toISOString());
 });
+
+test("GET to /api/v1/status data must have 'database'", async () => {
+  const { body } = await getStatus();
+
+  expect(body).toHaveProperty("database");
+  expect(body.database).toBeTruthy();
+});
+
+test("GET to /api/v1/status data from database must have server_version | max_connections | current_connections", async () => {
+  const { body } = await getStatus();
+
+  expect(body.database.server_version).toBeTruthy();
+});
