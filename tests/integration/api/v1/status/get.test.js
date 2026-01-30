@@ -37,7 +37,6 @@ test("GET to /api/v1/status data from database must have the server expected pro
 });
 
 test("GET to /api/v1/status data from database must have max_connections", async () => {
-
   const { body } = await getStatus();
 
   expect(body.database.max_connections).toBeTruthy();
