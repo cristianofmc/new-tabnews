@@ -29,17 +29,11 @@ test("GET to /api/v1/status data must have 'database'", async () => {
   expect(body.database).toBeTruthy();
 });
 
-test("GET to /api/v1/status data from database must have server_version | max_connections | current_connections", async () => {
+test("GET to /api/v1/status data from database must have the server expected propreties", async () => {
   const { body } = await getStatus();
 
   expect(body.database.server_version).toBeTruthy();
   expect(body.database.server_version).toBe('18.1');
-});
-
-test("GET to /api/v1/status data from database must have max_connections", async () => {
   expect(body.database.max_connections).toBeTruthy();
-});
-
-test("GET to /api/v1/status data from database must have current_connections", async () => {
   expect(body.database.current_connections).toBeTruthy();
 });
