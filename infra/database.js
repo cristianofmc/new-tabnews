@@ -18,4 +18,19 @@ export async function query(queryObject) {
   }
 }
 
-export default { query };
+async function status(){
+  const databaseName = process.env.POSTGRES_DB;
+  const status_query = `
+    select
+      current_setting('server_version') as server_version,
+      current_setting('max_connections')::int as max_connections,
+      count(*)::int as current_connections
+    from pg_stat_activity
+    where datname = $1;
+  `;
+  
+  const result = await query({text: status_query, values: [databaseName]});
+  return result.rows[0];
+}
+
+export default { query, status };
