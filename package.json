@@ -23,10 +23,14 @@
     "lint:fix": "prettier --write .",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:watchAll": "jest --watchAll"
+    "test:watchAll": "jest --watchAll",
+    "migration:create": "node-pg-migrate create -m infra/migrations",
+    "migration:up": "node-pg-migrate -m infra/migrations --envPath .env.development up"
   },
   "dependencies": {
-    "next": "16.1.1",
+    "dotenv": "^17.2.3",
+    "next": "^16.1.6",
+    "node-pg-migrate": "^8.0.4",
     "pg": "^8.17.2",
     "react": "19.2",
     "react-dom": "19.2"
