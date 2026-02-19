@@ -1,6 +1,12 @@
+import { query } from "infra/database";
+
+beforeAll(cleanDatabase);
+async function cleanDatabase(){
+  await query("drop schema public cascade; create schema public;");
+}
+
 async function postMigrations(){
   const response = await fetch("http://localhost:3000/api/v1/migrations", {method: 'POST'});
-  expect(response.status).toBe(200);
 
   const contentType = response.headers.get('content-type') || "";
   expect(contentType).toContain("application/json");
@@ -10,6 +16,15 @@ async function postMigrations(){
 }
 
 test("POST to /api/v1/migrations should return array", async () => {
-  const { body } = await postMigrations();
-  // expect(Array.isArray(body)).toBe(true);
+  const { response, body } = await postMigrations();
+  expect(response.status).toBe(201);
+  expect(Array.isArray(body)).toBe(true);
+  expect(body.length).toBeGreaterThan(0);
+});
+
+test("POST to /api/v1/migrations for the second time, should return nothing", async () => {
+  const { response, body } = await postMigrations();
+  expect(response.status).toBe(200);
+  expect(Array.isArray(body)).toBe(true);
+  expect(body.length).toBe(0);
 });
