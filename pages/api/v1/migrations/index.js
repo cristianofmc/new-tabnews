@@ -9,7 +9,7 @@ async function migrations(request, response) {
     dbClient: dbClient,
     dryRun: true,
     direction: "up",
-    dir: resolve("infra", "migrations"),
+    dir: path.join(process.cwd(), "infra", "migrations"),
     verbose: true,
     migrationsTable: "pgmigrations",
   }
