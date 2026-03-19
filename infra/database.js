@@ -39,7 +39,10 @@ async function status(){
   `;
   
   const result = await query({text: status_query, values: [databaseName]});
-  return result.rows[0];
+  return {
+    database_name: databaseName,
+    ...result.rows[0]
+  }
 }
 
 export default { query, status, getNewClient };
