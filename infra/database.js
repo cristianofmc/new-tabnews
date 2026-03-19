@@ -29,6 +29,7 @@ export async function query(queryObject) {
 
 async function status(){
   const databaseName = process.env.POSTGRES_DB;
+  const appEnv = process.env.APP_ENV || process.env.NODE_ENV || "unknown";
   const status_query = `
     select
       current_setting('server_version') as server_version,
@@ -40,7 +41,7 @@ async function status(){
   
   const result = await query({text: status_query, values: [databaseName]});
   return {
-    database_name: databaseName,
+    environment: appEnv,
     ...result.rows[0]
   }
 }
