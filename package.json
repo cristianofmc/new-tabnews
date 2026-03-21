@@ -14,7 +14,7 @@
   "author": "",
   "main": "index.js",
   "scripts": {
-    "dev": "npm run services:up && next dev",
+    "dev": "npm run services:up && npm run wait_for_postgres && npm run migration:up  && next dev",
     "services:up": "podman compose -f infra/compose.yaml up -d",
     "services:down": "podman compose -f infra/compose.yaml down",
     "services:stop": "podman compose -f infra/compose.yaml stop",
@@ -24,7 +24,8 @@
     "test:watch": "jest --watch --runInBand",
     "test:watchAll": "jest --watchAll --runInBand",
     "migration:create": "node-pg-migrate create -m infra/migrations",
-    "migration:up": "node-pg-migrate -m infra/migrations --envPath .env.development up"
+    "migration:up": "node-pg-migrate -m infra/migrations --envPath .env.development up",
+    "wait_for_postgres": "node infra/scripts/wait_for_postgres.js"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
