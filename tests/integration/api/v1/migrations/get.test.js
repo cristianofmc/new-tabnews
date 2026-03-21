@@ -1,15 +1,15 @@
 import { query } from "infra/database";
 
 beforeAll(cleanDatabase);
-async function cleanDatabase(){
+async function cleanDatabase() {
   await query("drop schema public cascade; create schema public;");
 }
 
-async function getMigrations(){
+async function getMigrations() {
   const response = await fetch("http://localhost:3000/api/v1/migrations");
   expect(response.status).toBe(200);
 
-  const contentType = response.headers.get('content-type') || "";
+  const contentType = response.headers.get("content-type") || "";
   expect(contentType).toContain("application/json");
 
   const body = await response.json();
