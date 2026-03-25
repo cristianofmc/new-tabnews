@@ -39,6 +39,8 @@
     "react-dom": "19.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@eslint/css": "^1.0.0",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/json": "^1.2.0",
