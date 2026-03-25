@@ -23,7 +23,9 @@ export async function query(queryObject) {
     console.error(error);
     throw error;
   } finally {
-    await client.end().catch(() => {});
+    if (client) {
+      await client.end().catch(() => {});
+    }
   }
 }
 
@@ -46,4 +48,10 @@ async function status() {
   };
 }
 
-export default { query, status, getNewClient };
+const database = {
+  query,
+  status,
+  getNewClient,
+};
+
+export default database;
