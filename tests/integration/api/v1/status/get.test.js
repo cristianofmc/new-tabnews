@@ -39,7 +39,7 @@ test("GET to /api/v1/status data from database must have the server expected pro
   const { body } = await getStatus();
 
   expect(body.database.server_version).toBeTruthy();
-  expect(body.database.server_version).toBe("18.1");
+  expect(body.database.server_version).toBe("18.3");
 });
 
 test("GET to /api/v1/status data from database must have max_connections", async () => {
