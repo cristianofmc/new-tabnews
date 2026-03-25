@@ -20,6 +20,7 @@
     "services:stop": "podman compose -f infra/compose.yaml stop",
     "lint:prettier:check": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
+    "lint:eslint:check": "eslint .",
     "test": "npm run services:up && concurrently -n next,jest --hide next -k -s command-jest \"next dev\" \"jest --runInBand --verbose\"",
     "test:watch": "jest --watch --runInBand",
     "test:watchAll": "jest --watchAll --runInBand",
@@ -38,7 +39,16 @@
     "react-dom": "19.2"
   },
   "devDependencies": {
+    "@eslint/css": "^1.0.0",
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/json": "^1.2.0",
+    "@eslint/markdown": "^7.5.1",
     "concurrently": "^9.2.1",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.1.7",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jest": "^29.15.1",
+    "globals": "^17.4.0",
     "jest": "^30.2.0",
     "prettier": "^3.8.1"
   }

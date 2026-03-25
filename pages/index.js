@@ -1,13 +1,20 @@
+import { useRef } from "react";
+
 function Home() {
-  let timer;
+  const timerRef = useRef(null);
 
   const reveal = () => {
     const t = document.getElementById("text");
+    if (!t) return;
+
     t.style.opacity = "1";
     t.style.filter = "blur(0px)";
 
-    clearTimeout(timer);
-    timer = setTimeout(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    timerRef.current = setTimeout(() => {
       t.style.opacity = "0";
       t.style.filter = "blur(8px)";
     }, 1200);
