@@ -6,13 +6,14 @@ jobs:
   jest: 
     name: Jest Tests on Ubuntu
     runs-on: ubuntu-latest
+
     steps: 
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
-      with:
-        node-version: 25.2.1
+        with:
+          node-version: "25"
 
       - run: npm ci
 
-      - run: npm Tests
+      - run: npm test
