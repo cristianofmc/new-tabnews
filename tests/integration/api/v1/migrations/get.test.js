@@ -1,14 +1,9 @@
-import { query } from "infra/database";
 import orchestrator from "tests/orchestrator.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
-  await cleanDatabase(); // Corrigido: await adicionado
+  await orchestrator.cleanDatabase();
 });
-
-async function cleanDatabase() {
-  await query("drop schema public cascade; create schema public;");
-}
 
 async function getMigrations() {
   const baseUrl = process.env.APP_URL || "http://localhost:3000";
