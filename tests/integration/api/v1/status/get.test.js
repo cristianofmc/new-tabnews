@@ -24,7 +24,7 @@ describe("GET /api/v1/status", () => {
       );
       expect(Object.keys(body).length).toBeGreaterThan(0);
 
-      // Data validations(updated_at) ---
+      // Data validations
       const parsedUpdatedAt = new Date(body.updated_at);
       expect(parsedUpdatedAt.toString()).not.toBe("Invalid Date");
       expect(body.updated_at).toBe(parsedUpdatedAt.toISOString());
