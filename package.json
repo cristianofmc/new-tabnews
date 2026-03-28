@@ -18,6 +18,7 @@
     "services:up": "podman compose -f infra/compose.yaml up -d",
     "services:down": "podman compose -f infra/compose.yaml down",
     "services:stop": "podman compose -f infra/compose.yaml stop",
+    "services:wait:database": "node infra/scripts/wait_for_postgres.js",
     "lint:prettier:check": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
     "lint:eslint:check": "eslint .",
@@ -26,7 +27,6 @@
     "test:watchAll": "jest --watchAll --runInBand",
     "migration:create": "node-pg-migrate create -m infra/migrations",
     "migration:up": "node-pg-migrate -m infra/migrations --envPath .env.development up",
-    "wait_for_postgres": "node infra/scripts/wait_for_postgres.js",
     "prepare": "husky",
     "commit": "cz"
   },
