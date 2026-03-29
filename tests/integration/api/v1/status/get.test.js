@@ -29,12 +29,12 @@ describe("GET /api/v1/status", () => {
       expect(parsedUpdatedAt.toString()).not.toBe("Invalid Date");
       expect(body.updated_at).toBe(parsedUpdatedAt.toISOString());
 
-      // DataBase validaitions
+      // Database validations
       expect(body.database).toBeDefined();
       expect(body.database.server_version).toBe("18.3");
       expect(body.database.max_connections).toBe(100);
 
-      // DataBase connection
+      // Database connection
       expect(body.database.current_connections).toBe(1);
     });
   });
