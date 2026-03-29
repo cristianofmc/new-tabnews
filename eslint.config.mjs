@@ -7,6 +7,8 @@ import { defineConfig } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import jest from "eslint-plugin-jest";
 import prettier from "eslint-config-prettier/flat";
+import pluginSecurity from "eslint-plugin-security";
+import pluginSdl from "@microsoft/eslint-plugin-sdl";
 
 import * as espree from "espree";
 
@@ -39,6 +41,17 @@ export default defineConfig([
   },
 
   ...nextVitals,
+  pluginSecurity.configs.recommended,
+
+  {
+    files: ["**/*.{js,mjs,cjs,jsx}"],
+    plugins: {
+      "@microsoft/sdl": pluginSdl,
+    },
+    rules: {
+      ...pluginSdl.configs.recommended.rules,
+    },
+  },
 
   {
     files: ["**/*.{js,mjs,cjs,jsx}"],
