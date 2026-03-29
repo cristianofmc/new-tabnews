@@ -4,7 +4,9 @@ Cristiano
 datname
 esbenp
 husky
+pg_isready
 pgmigrations
 prettier
+returntocorp
+semgrep
 tabnews
-pg_isready
