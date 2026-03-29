@@ -1,0 +1,10 @@
+# Custom Dictionary Words
+commitlint
+Cristiano
+datname
+esbenp
+husky
+pgmigrations
+prettier
+tabnews
+pg_isready

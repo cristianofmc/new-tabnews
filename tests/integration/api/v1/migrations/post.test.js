@@ -1,18 +1,13 @@
-import { query } from "infra/database";
 import orchestrator from "tests/orchestrator.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
-  cleanDatabase();
+  await orchestrator.cleanDatabase();
 });
 
-beforeAll(cleanDatabase);
-async function cleanDatabase() {
-  await query("drop schema public cascade; create schema public;");
-}
-
 async function postMigrations() {
-  const response = await fetch("http://localhost:3000/api/v1/migrations", {
+  const baseUrl = process.env.APP_URL || "http://localhost:3000";
+  const response = await fetch(`${baseUrl}/api/v1/migrations`, {
     method: "POST",
   });
 
@@ -23,16 +18,22 @@ async function postMigrations() {
   return { response, body };
 }
 
-test("POST to /api/v1/migrations should return array", async () => {
-  const { response, body } = await postMigrations();
-  expect(response.status).toBe(201);
-  expect(Array.isArray(body)).toBe(true);
-  expect(body.length).toBeGreaterThan(0);
-});
+describe("POST /api/v1/migrations", () => {
+  describe("Anonymous user", () => {
+    test("should run pending migrations on the first call", async () => {
+      const { response, body } = await postMigrations();
 
-test("POST to /api/v1/migrations for the second time, should return nothing", async () => {
-  const { response, body } = await postMigrations();
-  expect(response.status).toBe(200);
-  expect(Array.isArray(body)).toBe(true);
-  expect(body.length).toBe(0);
+      expect(response.status).toBe(201);
+      expect(Array.isArray(body)).toBe(true);
+      expect(body.length).toBeGreaterThan(0);
+    });
+
+    test("should return an empty array on the second call", async () => {
+      const { response, body } = await postMigrations();
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(body)).toBe(true);
+      expect(body.length).toBe(0);
+    });
+  });
 });

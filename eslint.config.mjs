@@ -8,6 +8,8 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import jest from "eslint-plugin-jest";
 import prettier from "eslint-config-prettier/flat";
 
+import * as espree from "espree";
+
 export default defineConfig([
   {
     ignores: [
@@ -28,7 +30,7 @@ export default defineConfig([
       globals: {
         ...globals.browser,
         ...globals.node,
-        ...globals.jest, // Incluído aqui também por segurança
+        ...globals.jest,
       },
       parserOptions: {
         ecmaFeatures: { jsx: true },
@@ -37,6 +39,18 @@ export default defineConfig([
   },
 
   ...nextVitals,
+
+  {
+    files: ["**/*.{js,mjs,cjs,jsx}"],
+    languageOptions: {
+      parser: espree,
+    },
+    settings: {
+      react: {
+        version: "19.2",
+      },
+    },
+  },
 
   {
     files: ["tests/**/*.test.js", "**/*.test.js"],

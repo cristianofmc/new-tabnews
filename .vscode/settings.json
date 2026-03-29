@@ -13,5 +13,7 @@
   "prettier.requireConfig": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
-  }
+  },
+
+  "cSpell.showStatus": true
 }

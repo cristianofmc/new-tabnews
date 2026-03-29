@@ -37,6 +37,23 @@ jobs:
       - name: Run lint eslint
         run: npm run lint:eslint:check
 
+  spellcheck:
+    name: CSpell
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run spellcheck
+        run: npm run lint:spell:check
+
   commitlint:
     name: commitlint
     runs-on: ubuntu-latest

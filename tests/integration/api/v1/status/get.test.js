@@ -5,53 +5,37 @@ beforeAll(async () => {
 });
 
 async function getStatus() {
-  const response = await fetch("http://localhost:3000/api/v1/status");
-  expect(response.status).toBe(200);
-
-  const contentType = response.headers.get("content-type") || "";
-  expect(contentType).toContain("application/json");
-
+  const baseUrl = process.env.APP_URL || "http://localhost:3000";
+  const response = await fetch(`${baseUrl}/api/v1/status`);
   const body = await response.json();
+
   return { response, body };
 }
 
-test("GET to /api/v1/status should return data", async () => {
-  const { body } = await getStatus();
-  expect(Object.keys(body).length).toBeGreaterThan(0);
-});
+describe("GET /api/v1/status", () => {
+  describe("Anonymous user", () => {
+    test("should return complete and valid system status", async () => {
+      const { response, body } = await getStatus();
 
-test("GET to /api/v1/status data must have 'updated_at' key with value in ISO", async () => {
-  const { body } = await getStatus();
+      // HTTP response
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain(
+        "application/json",
+      );
+      expect(Object.keys(body).length).toBeGreaterThan(0);
 
-  const date = new Date(body.updated_at);
-  expect(date.toString()).not.toBe("Invalid Date");
-  expect(body.updated_at).toBe(date.toISOString());
-});
+      // Data validations
+      const parsedUpdatedAt = new Date(body.updated_at);
+      expect(parsedUpdatedAt.toString()).not.toBe("Invalid Date");
+      expect(body.updated_at).toBe(parsedUpdatedAt.toISOString());
 
-test("GET to /api/v1/status data must have 'database'", async () => {
-  const { body } = await getStatus();
+      // Database validations
+      expect(body.database).toBeDefined();
+      expect(body.database.server_version).toBe("18.3");
+      expect(body.database.max_connections).toBe(100);
 
-  expect(body).toHaveProperty("database");
-  expect(body.database).toBeTruthy();
-});
-
-test("GET to /api/v1/status data from database must have the server expected propreties", async () => {
-  const { body } = await getStatus();
-
-  expect(body.database.server_version).toBeTruthy();
-  expect(body.database.server_version).toBe("18.3");
-});
-
-test("GET to /api/v1/status data from database must have max_connections", async () => {
-  const { body } = await getStatus();
-
-  expect(body.database.max_connections).toBeTruthy();
-  expect(body.database.max_connections).toBe(100);
-});
-
-test("GET to /api/v1/status data from database must have current_connections", async () => {
-  const { body } = await getStatus();
-
-  expect(body.database.current_connections).toBeTruthy();
-  expect(body.database.current_connections).toBe(1);
+      // Database connection
+      expect(body.database.current_connections).toBe(1);
+    });
+  });
 });
