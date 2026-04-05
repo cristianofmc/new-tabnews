@@ -20,12 +20,11 @@ export async function query(queryObject) {
     client = await getNewClient();
     return await client.query(queryObject);
   } catch (error) {
+    console.log("\ndatabase.js error:");
     console.error(error);
     throw error;
   } finally {
-    if (client) {
-      await client.end().catch(() => {});
-    }
+    await client?.end();
   }
 }
 
