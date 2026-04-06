@@ -1,4 +1,5 @@
 import { Client } from "pg";
+import { ServiceError } from "@/infra/errors";
 
 export async function getNewClient() {
   const client = new Client({
@@ -20,9 +21,11 @@ export async function query(queryObject) {
     client = await getNewClient();
     return await client.query(queryObject);
   } catch (error) {
-    console.log("\ndatabase.js error:");
-    console.error(error);
-    throw error;
+    const ServiceErrorObject = new ServiceError({
+      message: "Error connecting to the database or in the query.",
+      cause: error,
+    });
+    throw ServiceErrorObject;
   } finally {
     await client?.end();
   }

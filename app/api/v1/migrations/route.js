@@ -1,54 +1,60 @@
+import { handle } from "hono/vercel";
 import { runner as migrationRunner } from "node-pg-migrate";
 import path from "node:path";
 import database from "@/infra/database";
+import { createEndpoint } from "@/infra/endpoint";
 
-async function migrations(request) {
-  const allowedMethods = ["GET", "POST"];
-  if (!allowedMethods.includes(request.method)) {
-    return Response.json(
-      {
-        error: `Method "${request.method}" not allowed`,
-      },
-      { status: 405 },
-    );
-  }
+const endpoint = createEndpoint();
 
+endpoint.get("*", getHandler);
+endpoint.post("*", postHandler);
+
+const defaultMigrationOptions = {
+  direction: "up",
+  dir: path.join(process.cwd(), "infra", "migrations"),
+  verbose: true,
+  migrationsTable: "pgmigrations",
+};
+
+async function getHandler(context) {
   let dbClient;
   try {
     dbClient = await database.getNewClient();
 
-    const defaultMigrationOptions = {
-      dbClient: dbClient,
+    const pendingMigrations = await migrationRunner({
+      ...defaultMigrationOptions,
+      dbClient,
       dryRun: true,
-      direction: "up",
-      dir: path.join(process.cwd(), "infra", "migrations"),
-      verbose: true,
-      migrationsTable: "pgmigrations",
-    };
+    });
 
-    if (request.method === "GET") {
-      const pendingMigrations = await migrationRunner({
-        ...defaultMigrationOptions,
-      });
-      return Response.json(pendingMigrations, { status: 200 });
-    }
-
-    if (request.method === "POST") {
-      const migratedMigrations = await migrationRunner({
-        ...defaultMigrationOptions,
-        dryRun: false,
-      });
-
-      const status = migratedMigrations.length ? 201 : 200;
-      return Response.json(migratedMigrations, { status: status });
-    }
-  } catch (error) {
-    console.error(error);
-    throw error;
+    return context.json(pendingMigrations, 200);
   } finally {
     await dbClient?.end();
   }
 }
 
-export const GET = migrations;
-export const POST = migrations;
+async function postHandler(context) {
+  let dbClient;
+  try {
+    dbClient = await database.getNewClient();
+
+    const migratedMigrations = await migrationRunner({
+      ...defaultMigrationOptions,
+      dbClient,
+      dryRun: false,
+    });
+
+    const status = migratedMigrations.length ? 201 : 200;
+    return context.json(migratedMigrations, status);
+  } finally {
+    await dbClient?.end();
+  }
+}
+
+const handler = handle(endpoint);
+
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;

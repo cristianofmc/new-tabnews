@@ -1,31 +1,28 @@
+import { handle } from "hono/vercel";
 import database from "@/infra/database.js";
-import { InternalServerError } from "infra/errors";
+import { createEndpoint } from "@/infra/endpoint";
 
-async function status() {
-  try {
-    const updatedAt = new Date().toISOString();
-    const database_status = await database.status();
-    return Response.json(
-      {
-        updated_at: updatedAt,
-        database: database_status,
-      },
-      {
-        status: 200,
-      },
-    );
-  } catch (error) {
-    const publicErrorObject = new InternalServerError({
-      cause: error,
-    });
+const endpoint = createEndpoint();
 
-    console.log("\nController error:");
-    console.error(publicErrorObject);
+endpoint.get("*", status);
 
-    return Response.json(publicErrorObject, {
-      status: publicErrorObject.statusCode || 500,
-    });
-  }
+async function status(context) {
+  const updatedAt = new Date().toISOString();
+  const database_status = await database.status();
+
+  return context.json(
+    {
+      updated_at: updatedAt,
+      database: database_status,
+    },
+    200,
+  );
 }
 
-export const GET = status;
+const handler = handle(endpoint);
+
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;
