@@ -1,31 +1,47 @@
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
 import database from "@/infra/database.js";
-import { InternalServerError } from "infra/errors";
+import { InternalServerError, MethodNotAllowedError } from "infra/errors";
 
-async function status() {
-  try {
-    const updatedAt = new Date().toISOString();
-    const database_status = await database.status();
-    return Response.json(
-      {
-        updated_at: updatedAt,
-        database: database_status,
-      },
-      {
-        status: 200,
-      },
-    );
-  } catch (error) {
-    const publicErrorObject = new InternalServerError({
-      cause: error,
-    });
+const endpoint = new Hono();
 
-    console.log("\nController error:");
-    console.error(publicErrorObject);
+endpoint.get("*", status);
+endpoint.all("*", onNoMatchHandler);
+endpoint.onError(onErrorHandler);
 
-    return Response.json(publicErrorObject, {
-      status: publicErrorObject.statusCode || 500,
-    });
-  }
+function onNoMatchHandler(context) {
+  const publicErrorObject = new MethodNotAllowedError();
+  return context.json(publicErrorObject, publicErrorObject.statusCode);
 }
 
-export const GET = status;
+function onErrorHandler(error, context) {
+  const publicErrorObject = new InternalServerError({
+    cause: error,
+  });
+
+  console.log("\nHono controller error:");
+  console.error(publicErrorObject);
+
+  return context.json(publicErrorObject, publicErrorObject.statusCode);
+}
+
+async function status(context) {
+  const updatedAt = new Date().toISOString();
+  const database_status = await database.status();
+
+  return context.json(
+    {
+      updated_at: updatedAt,
+      database: database_status,
+    },
+    200,
+  );
+}
+
+const handler = handle(endpoint);
+
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;

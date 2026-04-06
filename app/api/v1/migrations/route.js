@@ -1,19 +1,37 @@
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
 import { runner as migrationRunner } from "node-pg-migrate";
 import path from "node:path";
 import database from "@/infra/database";
+import { InternalServerError, MethodNotAllowedError } from "@/infra/errors";
 
-async function migrations(request) {
-  const allowedMethods = ["GET", "POST"];
-  if (!allowedMethods.includes(request.method)) {
-    return Response.json(
-      {
-        error: `Method "${request.method}" not allowed`,
-      },
-      { status: 405 },
-    );
-  }
+const endpoint = new Hono();
 
+endpoint.get("*", migrations);
+endpoint.post("*", migrations);
+endpoint.all("*", onNoMatchHandler);
+endpoint.onError(onErrorHandler);
+
+function onNoMatchHandler(context) {
+  const publicErrorObject = new MethodNotAllowedError();
+  return context.json(publicErrorObject, publicErrorObject.statusCode);
+}
+
+function onErrorHandler(error, context) {
+  const publicErrorObject = new InternalServerError({
+    cause: error,
+  });
+
+  console.log("\nHono controller error:");
+  console.error(publicErrorObject);
+
+  return context.json(publicErrorObject, publicErrorObject.statusCode);
+}
+
+async function migrations(context) {
+  const method = context.req.method;
   let dbClient;
+
   try {
     dbClient = await database.getNewClient();
 
@@ -26,29 +44,31 @@ async function migrations(request) {
       migrationsTable: "pgmigrations",
     };
 
-    if (request.method === "GET") {
+    if (method === "GET") {
       const pendingMigrations = await migrationRunner({
         ...defaultMigrationOptions,
       });
-      return Response.json(pendingMigrations, { status: 200 });
+      return context.json(pendingMigrations, 200);
     }
 
-    if (request.method === "POST") {
+    if (method === "POST") {
       const migratedMigrations = await migrationRunner({
         ...defaultMigrationOptions,
         dryRun: false,
       });
 
       const status = migratedMigrations.length ? 201 : 200;
-      return Response.json(migratedMigrations, { status: status });
+      return context.json(migratedMigrations, status);
     }
-  } catch (error) {
-    console.error(error);
-    throw error;
   } finally {
     await dbClient?.end();
   }
 }
 
-export const GET = migrations;
-export const POST = migrations;
+const handler = handle(endpoint);
+
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;
