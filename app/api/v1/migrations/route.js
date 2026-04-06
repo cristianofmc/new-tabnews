@@ -1,65 +1,51 @@
-import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { runner as migrationRunner } from "node-pg-migrate";
 import path from "node:path";
 import database from "@/infra/database";
-import { InternalServerError, MethodNotAllowedError } from "@/infra/errors";
+import { createEndpoint } from "@/infra/endpoint";
 
-const endpoint = new Hono();
+const endpoint = createEndpoint();
 
-endpoint.get("*", migrations);
-endpoint.post("*", migrations);
-endpoint.all("*", onNoMatchHandler);
-endpoint.onError(onErrorHandler);
+endpoint.get("*", getHandler);
+endpoint.post("*", postHandler);
 
-function onNoMatchHandler(context) {
-  const publicErrorObject = new MethodNotAllowedError();
-  return context.json(publicErrorObject, publicErrorObject.statusCode);
-}
+const defaultMigrationOptions = {
+  direction: "up",
+  dir: path.join(process.cwd(), "infra", "migrations"),
+  verbose: true,
+  migrationsTable: "pgmigrations",
+};
 
-function onErrorHandler(error, context) {
-  const publicErrorObject = new InternalServerError({
-    cause: error,
-  });
-
-  console.log("\nHono controller error:");
-  console.error(publicErrorObject);
-
-  return context.json(publicErrorObject, publicErrorObject.statusCode);
-}
-
-async function migrations(context) {
-  const method = context.req.method;
+async function getHandler(context) {
   let dbClient;
-
   try {
     dbClient = await database.getNewClient();
 
-    const defaultMigrationOptions = {
-      dbClient: dbClient,
+    const pendingMigrations = await migrationRunner({
+      ...defaultMigrationOptions,
+      dbClient,
       dryRun: true,
-      direction: "up",
-      dir: path.join(process.cwd(), "infra", "migrations"),
-      verbose: true,
-      migrationsTable: "pgmigrations",
-    };
+    });
 
-    if (method === "GET") {
-      const pendingMigrations = await migrationRunner({
-        ...defaultMigrationOptions,
-      });
-      return context.json(pendingMigrations, 200);
-    }
+    return context.json(pendingMigrations, 200);
+  } finally {
+    await dbClient?.end();
+  }
+}
 
-    if (method === "POST") {
-      const migratedMigrations = await migrationRunner({
-        ...defaultMigrationOptions,
-        dryRun: false,
-      });
+async function postHandler(context) {
+  let dbClient;
+  try {
+    dbClient = await database.getNewClient();
 
-      const status = migratedMigrations.length ? 201 : 200;
-      return context.json(migratedMigrations, status);
-    }
+    const migratedMigrations = await migrationRunner({
+      ...defaultMigrationOptions,
+      dbClient,
+      dryRun: false,
+    });
+
+    const status = migratedMigrations.length ? 201 : 200;
+    return context.json(migratedMigrations, status);
   } finally {
     await dbClient?.end();
   }
