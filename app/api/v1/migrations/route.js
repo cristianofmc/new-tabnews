@@ -1,6 +1,6 @@
 import { handle } from "hono/vercel";
-import { createEndpoint } from "@/infra/endpoint";
-import migrator from "@/models/migrator";
+import { createEndpoint } from "#infra/endpoint.js";
+import migrator from "#models/migrator.js";
 
 const endpoint = createEndpoint();
 

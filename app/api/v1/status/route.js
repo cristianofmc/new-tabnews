@@ -1,6 +1,6 @@
 import { handle } from "hono/vercel";
-import database from "@/infra/database.js";
-import { createEndpoint } from "@/infra/endpoint";
+import database from "#infra/database.js";
+import { createEndpoint } from "#infra/endpoint.js";
 
 const endpoint = createEndpoint();
 

@@ -1,51 +1,36 @@
 import path from "node:path";
-import database from "@/infra/database";
-import { runner as migrationRunner } from "node-pg-migrate";
+import database from "#infra/database.js";
+import { runner } from "node-pg-migrate";
 
-const defaultMigrationOptions = {
-  direction: "up",
-  dir: path.join(process.cwd(), "infra", "migrations"),
-  verbose: true,
-  migrationsTable: "pgmigrations",
-};
+function buildMigrationOptions(dryRun) {
+  return {
+    direction: "up",
+    dir: path.join(process.cwd(), "infra", "migrations"),
+    verbose: true,
+    migrationsTable: "pgmigrations",
+    dryRun,
+  };
+}
 
-async function listPendingMigrations() {
+async function delegateToMigrationRunner(options) {
   let dbClient;
   try {
     dbClient = await database.getNewClient();
-
-    const pendingMigrations = await migrationRunner({
-      ...defaultMigrationOptions,
+    return await runner({
+      ...options,
       dbClient,
-      dryRun: true,
     });
-
-    return pendingMigrations;
   } finally {
     await dbClient?.end();
   }
 }
 
-async function runPendingMigrations() {
-  let dbClient;
-  try {
-    dbClient = await database.getNewClient();
-
-    const migratedMigrations = await migrationRunner({
-      ...defaultMigrationOptions,
-      dbClient,
-      dryRun: false,
-    });
-
-    return migratedMigrations;
-  } finally {
-    await dbClient?.end();
-  }
+export async function listPendingMigrations() {
+  return delegateToMigrationRunner(buildMigrationOptions(true));
 }
 
-const migrator = {
-  listPendingMigrations,
-  runPendingMigrations,
-};
+export async function runPendingMigrations() {
+  return delegateToMigrationRunner(buildMigrationOptions(false));
+}
 
-export default migrator;
+export default { listPendingMigrations, runPendingMigrations };

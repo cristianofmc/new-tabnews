@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { ServiceError } from "@/infra/errors";
+import { ServiceError } from "#infra/errors.js";
 
 export async function getNewClient() {
   const client = new Client({
