@@ -3,4 +3,4 @@ const nextConfig = {
   serverExternalPackages: ["node-pg-migrate"],
 };
 
-module.exports = nextConfig;
+export default nextConfig;

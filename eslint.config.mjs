@@ -5,7 +5,6 @@ import markdown from "@eslint/markdown";
 import css from "@eslint/css";
 import { defineConfig } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
-import jest from "eslint-plugin-jest";
 import prettier from "eslint-config-prettier/flat";
 import pluginSecurity from "eslint-plugin-security";
 import pluginSdl from "@microsoft/eslint-plugin-sdl";
@@ -32,7 +31,6 @@ export default defineConfig([
       globals: {
         ...globals.browser,
         ...globals.node,
-        ...globals.jest,
       },
       parserOptions: {
         ecmaFeatures: { jsx: true },
@@ -67,10 +65,9 @@ export default defineConfig([
 
   {
     files: ["tests/**/*.test.js", "**/*.test.js"],
-    extends: [jest.configs["flat/recommended"]],
     languageOptions: {
       globals: {
-        ...globals.jest,
+        ...globals.vitest,
       },
     },
   },

@@ -3,8 +3,8 @@ name: Automated Tests
 on: pull_request
 
 jobs:
-  jest:
-    name: Jest Tests on Ubuntu
+  vitest:
+    name: Vitest Tests on Ubuntu
     runs-on: ubuntu-latest
 
     steps:

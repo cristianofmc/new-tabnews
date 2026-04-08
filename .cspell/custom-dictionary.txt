@@ -4,9 +4,11 @@ Cristiano
 datname
 esbenp
 husky
+jimmyfive
 pg_isready
 pgmigrations
 prettier
 returntocorp
 semgrep
 tabnews
+Vitest
