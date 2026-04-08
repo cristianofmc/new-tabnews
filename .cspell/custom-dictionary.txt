@@ -11,4 +11,5 @@ prettier
 returntocorp
 semgrep
 tabnews
+timestamptz
 Vitest
