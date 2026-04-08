@@ -1,21 +1,13 @@
-import orchestrator from "tests/orchestrator.js";
+import orchestrator from "#tests/orchestrator.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
 });
 
-async function getStatus() {
-  const baseUrl = process.env.APP_URL || "http://localhost:3000";
-  const response = await fetch(`${baseUrl}/api/v1/status`);
-  const body = await response.json();
-
-  return { response, body };
-}
-
 describe("GET /api/v1/status", () => {
   describe("Anonymous user", () => {
     test("should return complete and valid system status", async () => {
-      const { response, body } = await getStatus();
+      const { response, body } = await orchestrator.request("/api/v1/status");
 
       // HTTP response
       expect(response.status).toBe(200);
@@ -25,9 +17,10 @@ describe("GET /api/v1/status", () => {
       expect(Object.keys(body).length).toBeGreaterThan(0);
 
       // Data validations
-      const parsedUpdatedAt = new Date(body.updated_at);
+      const updatedAt = body.updated_at;
+      const parsedUpdatedAt = new Date(updatedAt);
       expect(parsedUpdatedAt.toString()).not.toBe("Invalid Date");
-      expect(body.updated_at).toBe(parsedUpdatedAt.toISOString());
+      expect(updatedAt).toBe(parsedUpdatedAt.toISOString());
 
       // Database validations
       expect(body.database).toBeDefined();

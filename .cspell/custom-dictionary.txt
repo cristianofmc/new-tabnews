@@ -4,6 +4,7 @@ Cristiano
 datname
 esbenp
 husky
+jimmyfive
 pg_isready
 pgmigrations
 prettier
