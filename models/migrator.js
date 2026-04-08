@@ -33,4 +33,9 @@ export async function runPendingMigrations() {
   return delegateToMigrationRunner(buildMigrationOptions(false));
 }
 
-export default { listPendingMigrations, runPendingMigrations };
+const migrator = {
+  listPendingMigrations,
+  runPendingMigrations,
+};
+
+export default migrator;

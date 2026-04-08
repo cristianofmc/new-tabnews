@@ -11,3 +11,4 @@ prettier
 returntocorp
 semgrep
 tabnews
+Vitest
