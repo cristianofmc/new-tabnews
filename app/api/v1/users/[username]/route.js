@@ -4,11 +4,12 @@ import user from "#models/user.js";
 
 const endpoint = createEndpoint();
 
-endpoint.get("*", getHandler);
+endpoint.get("/api/v1/users/:username", getHandler);
 
 async function getHandler(context) {
-  const username = context.req.query("username");
+  const username = context.req.param("username");
   const userFound = await user.findOneByUsername(username);
+
   return context.json(userFound, 200);
 }
 

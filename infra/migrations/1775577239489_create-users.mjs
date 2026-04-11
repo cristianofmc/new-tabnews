@@ -16,17 +16,20 @@ export const up = (pgm) => {
       notNull: true,
       unique: true,
     },
+    // suitable for Argon2
     password: {
       type: "varchar(255)",
       notNull: true,
     },
     created_at: {
       type: "timestamptz",
-      default: pgm.func("now()"),
+      default: pgm.func("timezone('utc', now())"),
+      notNull: true,
     },
     updated_at: {
       type: "timestamptz",
-      default: pgm.func("now()"),
+      default: pgm.func("timezone('utc', now())"),
+      notNull: true,
     },
   });
 };

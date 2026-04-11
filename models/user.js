@@ -1,5 +1,5 @@
 import database from "#infra/database.js";
-import { ValidationError } from "#infra/errors.js";
+import { ValidationError, NotFoundError } from "#infra/errors.js";
 
 async function create(userInputValues) {
   await validateUniqueEmail(userInputValues.email);
@@ -89,12 +89,12 @@ async function findOneByUsername(username) {
       values: [username],
     });
 
-    // if (results.rowCount > 0) {
-    //   throw new ValidationError({
-    //     message: "The email address provided is already registered.",
-    //     action: "Try again with a different email.",
-    //   });
-    // }
+    if (results.rowCount == 0) {
+      throw new NotFoundError({
+        message: "The username provided was not found.",
+        action: "Please check that the username was entered correctly.",
+      });
+    }
 
     return results.rows[0];
   }
