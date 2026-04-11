@@ -1,13 +1,14 @@
 import {
   InternalServerError,
   ValidationError,
+  NotFoundError,
   MethodNotAllowedError,
 } from "#infra/errors.js";
 
 const controller = {
   errorHandlers: {
     onError(error, context) {
-      if (error instanceof ValidationError) {
+      if (error instanceof ValidationError || error instanceof NotFoundError) {
         return context.json(error, error.statusCode);
       }
 
