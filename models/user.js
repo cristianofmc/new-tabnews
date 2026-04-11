@@ -69,5 +69,36 @@ async function create(userInputValues) {
   }
 }
 
-const user = { create };
+async function findOneByUsername(username) {
+  const userFound = await runSelectQuery(username);
+
+  return userFound;
+
+  async function runSelectQuery(username) {
+    const results = await database.query({
+      text: `
+            SELECT
+              *
+            FROM
+              users
+            WHERE
+              LOWER(username) = LOWER($1)
+            LIMIT
+              1
+            ;`,
+      values: [username],
+    });
+
+    // if (results.rowCount > 0) {
+    //   throw new ValidationError({
+    //     message: "The email address provided is already registered.",
+    //     action: "Try again with a different email.",
+    //   });
+    // }
+
+    return results.rows[0];
+  }
+}
+
+const user = { create, findOneByUsername };
 export default user;
