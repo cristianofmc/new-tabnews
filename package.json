@@ -83,7 +83,9 @@
     "vitest": "^4.1.3"
   },
   "overrides": {
-    "eslint": "$eslint"
+    "@microsoft/eslint-plugin-sdl": {
+      "eslint": "$eslint"
+    }
   },
   "config": {
     "commitizen": {
