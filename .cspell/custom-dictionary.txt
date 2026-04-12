@@ -1,4 +1,5 @@
 # Custom Dictionary Words
+casejimmyfivecase
 commitlint
 Cristiano
 datname
@@ -11,4 +12,5 @@ prettier
 returntocorp
 semgrep
 tabnews
+timestamptz
 Vitest
