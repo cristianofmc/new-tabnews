@@ -5,12 +5,22 @@ import user from "#models/user.js";
 const endpoint = createEndpoint();
 
 endpoint.get("/api/v1/users/:username", getHandler);
+endpoint.patch("/api/v1/users/:username", patchHandler);
 
 async function getHandler(context) {
   const username = context.req.param("username");
   const userFound = await user.findOneByUsername(username);
 
   return context.json(userFound, 200);
+}
+
+async function patchHandler(context) {
+  const username = context.req.param("username");
+  const updateData = await context.req.json();
+
+  const updatedUser = await user.updateByUsername(username, updateData);
+
+  return context.json(updatedUser, 200);
 }
 
 const handler = handle(endpoint);

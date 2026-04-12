@@ -7,48 +7,6 @@ async function create(userInputValues) {
   const newUser = await runInsertQuery(userInputValues);
   return newUser;
 
-  async function validateUniqueEmail(email) {
-    const results = await database.query({
-      text: `
-          SELECT
-            email
-          FROM
-            users
-          WHERE
-            LOWER(email) = LOWER($1)
-          ;`,
-      values: [email],
-    });
-
-    if (results.rowCount > 0) {
-      throw new ValidationError({
-        message: "The email address provided is already registered.",
-        action: "Try again with a different email.",
-      });
-    }
-  }
-
-  async function validateUniqueUsername(username) {
-    const results = await database.query({
-      text: `
-        SELECT
-          username
-        FROM
-          users
-        WHERE
-          LOWER(username) = LOWER($1)
-        ;`,
-      values: [username],
-    });
-
-    if (results.rowCount > 0) {
-      throw new ValidationError({
-        message: "The username provided is already registered.",
-        action: "Try again with a different username.",
-      });
-    }
-  }
-
   async function runInsertQuery(userInputValues) {
     const result = await database.query({
       text: `
@@ -100,5 +58,77 @@ async function findOneByUsername(username) {
   }
 }
 
-const user = { create, findOneByUsername };
+async function updateByUsername(username, updateData) {
+  const currentUser = await findOneByUsername(username);
+
+  if (updateData.email && updateData.email !== currentUser.email) {
+    await validateUniqueEmail(updateData.email);
+  }
+
+  if (updateData.username && updateData.username !== currentUser.username) {
+    await validateUniqueUsername(updateData.username);
+  }
+
+  const result = await database.query({
+    text: `
+    UPDATE
+      users
+    SET
+      username = COALESCE($1, username),
+      email = COALESCE($2, email),
+      updated_at = timezone('utc', now())
+    WHERE
+      id = $3
+    RETURNING
+      *
+    ;`,
+    values: [updateData.username, updateData.email, currentUser.id],
+  });
+
+  return result.rows[0];
+}
+
+async function validateUniqueEmail(email) {
+  const results = await database.query({
+    text: `
+        SELECT
+          email
+        FROM
+          users
+        WHERE
+          LOWER(email) = LOWER($1)
+        ;`,
+    values: [email],
+  });
+
+  if (results.rowCount > 0) {
+    throw new ValidationError({
+      message: "The email address provided is already registered.",
+      action: "Try again with a different email.",
+    });
+  }
+}
+
+async function validateUniqueUsername(username) {
+  const results = await database.query({
+    text: `
+      SELECT
+        username
+      FROM
+        users
+      WHERE
+        LOWER(username) = LOWER($1)
+      ;`,
+    values: [username],
+  });
+
+  if (results.rowCount > 0) {
+    throw new ValidationError({
+      message: "The username provided is already registered.",
+      action: "Try again with a different username.",
+    });
+  }
+}
+
+const user = { create, findOneByUsername, updateByUsername };
 export default user;
