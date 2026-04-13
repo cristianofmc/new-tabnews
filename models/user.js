@@ -1,9 +1,17 @@
 import database from "#infra/database.js";
 import { ValidationError, NotFoundError } from "#infra/errors.js";
+import password from "#models/password.js";
+
+async function hashPasswordInObject(userInputValues) {
+  const hashedPassword = await password.hash(userInputValues.password);
+  userInputValues.password = hashedPassword;
+}
 
 async function create(userInputValues) {
   await validateUniqueEmail(userInputValues.email);
   await validateUniqueUsername(userInputValues.username);
+  await hashPasswordInObject(userInputValues);
+
   const newUser = await runInsertQuery(userInputValues);
   return newUser;
 
@@ -24,37 +32,6 @@ async function create(userInputValues) {
       ],
     });
     return result.rows[0];
-  }
-}
-
-async function findOneByUsername(username) {
-  const userFound = await runSelectQuery(username);
-
-  return userFound;
-
-  async function runSelectQuery(username) {
-    const results = await database.query({
-      text: `
-            SELECT
-              *
-            FROM
-              users
-            WHERE
-              LOWER(username) = LOWER($1)
-            LIMIT
-              1
-            ;`,
-      values: [username],
-    });
-
-    if (results.rowCount == 0) {
-      throw new NotFoundError({
-        message: "The username provided was not found.",
-        action: "Please check that the username was entered correctly.",
-      });
-    }
-
-    return results.rows[0];
   }
 }
 
@@ -86,6 +63,37 @@ async function updateByUsername(username, updateData) {
   });
 
   return result.rows[0];
+}
+
+async function findOneByUsername(username) {
+  const userFound = await runSelectQuery(username);
+
+  return userFound;
+
+  async function runSelectQuery(username) {
+    const results = await database.query({
+      text: `
+            SELECT
+              *
+            FROM
+              users
+            WHERE
+              LOWER(username) = LOWER($1)
+            LIMIT
+              1
+            ;`,
+      values: [username],
+    });
+
+    if (results.rowCount == 0) {
+      throw new NotFoundError({
+        message: "The username provided was not found.",
+        action: "Please check that the username was entered correctly.",
+      });
+    }
+
+    return results.rows[0];
+  }
 }
 
 async function validateUniqueEmail(email) {

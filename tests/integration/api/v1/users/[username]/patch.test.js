@@ -38,7 +38,7 @@ describe("PATCH /api/v1/users/[username]", () => {
         id: body.id,
         username: "updatedJimmyFive",
         email: "updated_jimmy_five@host.testemail",
-        password: "Test@123",
+        password: body.password,
         created_at: body.created_at,
         updated_at: body.updated_at,
       });
