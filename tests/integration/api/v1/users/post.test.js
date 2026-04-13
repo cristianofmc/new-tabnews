@@ -1,5 +1,7 @@
 import orchestrator from "#tests/orchestrator.js";
 import { version as uuidVersion } from "uuid";
+import user from "#models/user.js";
+import password from "#models/password.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -28,7 +30,7 @@ describe("POST /api/v1/users", () => {
         id: body.id,
         username: "jimmyfive",
         email: "jimmyfive@host.testemail",
-        password: "Test@123",
+        password: body.password,
         created_at: body.created_at,
         updated_at: body.updated_at,
       });
@@ -36,6 +38,21 @@ describe("POST /api/v1/users", () => {
       expect(uuidVersion(body.id)).toBe(4);
       expect(Date.parse(body.created_at)).not.toBe(NaN);
       expect(Date.parse(body.updated_at)).not.toBe(NaN);
+
+      const userInDatabase = await user.findOneByUsername("jimmyfive");
+      const correctPasswordMatch = await password.compare(
+        "Test@123",
+        userInDatabase.password,
+      );
+
+      expect(correctPasswordMatch).toBe(true);
+
+      const incorrectPasswordMatch = await password.compare(
+        "incorrectPassword",
+        userInDatabase.password,
+      );
+
+      expect(incorrectPasswordMatch).toBe(false);
     });
 
     test("should not create a new user account with duplicated email", async () => {
@@ -70,7 +87,7 @@ describe("POST /api/v1/users", () => {
       expect(returnRequest2.body).toEqual({
         name: "ValidationError",
         message: "The email address provided is already registered.",
-        action: "Try again with a different email.",
+        action: "Please try again with a different email.",
         status_code: 400,
       });
     });
@@ -107,7 +124,7 @@ describe("POST /api/v1/users", () => {
       expect(returnRequest2.body).toEqual({
         name: "ValidationError",
         message: "The username provided is already registered.",
-        action: "Try again with a different username.",
+        action: "Please try again with a different username.",
         status_code: 400,
       });
     });

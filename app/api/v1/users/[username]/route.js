@@ -1,6 +1,7 @@
 import { handle } from "hono/vercel";
 import { createEndpoint } from "#infra/endpoint.js";
 import user from "#models/user.js";
+import validator from "#infra/validators.js";
 
 const endpoint = createEndpoint();
 
@@ -17,6 +18,21 @@ async function getHandler(context) {
 async function patchHandler(context) {
   const username = context.req.param("username");
   const updateData = await context.req.json();
+
+  const allowedFields = ["username", "email", "password"];
+  validator.validatePayload(updateData, allowedFields);
+
+  if (updateData.username !== undefined) {
+    validator.validateUsername(updateData.username);
+  }
+
+  if (updateData.email !== undefined) {
+    validator.validateEmail(updateData.email);
+  }
+
+  if (updateData.password !== undefined) {
+    validator.validatePassword(updateData.password);
+  }
 
   const updatedUser = await user.updateByUsername(username, updateData);
 

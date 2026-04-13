@@ -1,95 +1,110 @@
 import database from "#infra/database.js";
 import { ValidationError, NotFoundError } from "#infra/errors.js";
+import password from "#models/password.js";
 
-async function create(userInputValues) {
-  await validateUniqueEmail(userInputValues.email);
-  await validateUniqueUsername(userInputValues.username);
-  const newUser = await runInsertQuery(userInputValues);
-  return newUser;
+async function create(updateData) {
+  const email = updateData.email.toLowerCase();
+  const username = updateData.username.toLowerCase();
 
-  async function runInsertQuery(userInputValues) {
-    const result = await database.query({
-      text: `
-        INSERT INTO
-          users (username, email, password)
-        VALUES
-          ($1, $2, $3)
-        RETURNING
-          *
-        ;`,
-      values: [
-        userInputValues.username,
-        userInputValues.email,
-        userInputValues.password,
-      ],
-    });
-    return result.rows[0];
-  }
-}
+  await validateUniqueEmail(email);
+  await validateUniqueUsername(username);
 
-async function findOneByUsername(username) {
-  const userFound = await runSelectQuery(username);
-
-  return userFound;
-
-  async function runSelectQuery(username) {
-    const results = await database.query({
-      text: `
-            SELECT
-              *
-            FROM
-              users
-            WHERE
-              LOWER(username) = LOWER($1)
-            LIMIT
-              1
-            ;`,
-      values: [username],
-    });
-
-    if (results.rowCount == 0) {
-      throw new NotFoundError({
-        message: "The username provided was not found.",
-        action: "Please check that the username was entered correctly.",
-      });
-    }
-
-    return results.rows[0];
-  }
-}
-
-async function updateByUsername(username, updateData) {
-  const currentUser = await findOneByUsername(username);
-
-  if (updateData.email && updateData.email !== currentUser.email) {
-    await validateUniqueEmail(updateData.email);
-  }
-
-  if (updateData.username && updateData.username !== currentUser.username) {
-    await validateUniqueUsername(updateData.username);
-  }
+  const hashedPassword = await password.hash(updateData.password);
 
   const result = await database.query({
     text: `
-    UPDATE
-      users
-    SET
-      username = COALESCE($1, username),
-      email = COALESCE($2, email),
-      updated_at = timezone('utc', now())
-    WHERE
-      id = $3
-    RETURNING
-      *
-    ;`,
-    values: [updateData.username, updateData.email, currentUser.id],
+        INSERT INTO
+          users (username, email, password)
+        VALUES
+          (LOWER($1), LOWER($2), $3)
+        RETURNING
+          *
+        ;`,
+    values: [username, email, hashedPassword],
   });
 
   return result.rows[0];
 }
 
+async function updateByUsername(currentUsername, updateData) {
+  const currentUser = await findOneByUsername(currentUsername);
+
+  const newEmail = updateData.email?.toLowerCase();
+  const newUsername = updateData.username?.toLowerCase();
+
+  if (newEmail && newEmail !== currentUser.email) {
+    await validateUniqueEmail(newEmail);
+  }
+
+  if (newUsername && newUsername !== currentUser.username) {
+    await validateUniqueUsername(newUsername);
+  }
+
+  let hashedPassword = null;
+
+  if (updateData.password) {
+    const isSamePassword = await password.compare(
+      updateData.password,
+      currentUser.password,
+    );
+
+    if (isSamePassword) {
+      throw new ValidationError({
+        message: "The new password cannot be the same as the current password.",
+        action: "Please choose a different password to enhance your security.",
+      });
+    }
+
+    hashedPassword = await password.hash(updateData.password);
+  }
+
+  const result = await database.query({
+    text: `
+        UPDATE
+          users
+        SET
+          username = COALESCE(LOWER($1), username),
+          email = COALESCE(LOWER($2), email),
+          password = COALESCE($3, password),
+          updated_at = timezone('utc', now())
+        WHERE
+          id = $4
+        RETURNING
+          *
+        ;`,
+    values: [newUsername, newEmail, hashedPassword, currentUser.id],
+  });
+
+  return result.rows[0];
+}
+
+async function findOneByUsername(username) {
+  const result = await database.query({
+    text: `
+        SELECT
+          *
+        FROM
+          users
+        WHERE
+          LOWER(username) = LOWER($1)
+        LIMIT
+          1
+        ;`,
+    values: [username],
+  });
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError({
+      message: "The username provided was not found.",
+      action: "Please check that the username was entered correctly.",
+    });
+  }
+
+  return result.rows[0];
+}
+
 async function validateUniqueEmail(email) {
-  const results = await database.query({
+  const result = await database.query({
     text: `
         SELECT
           email
@@ -101,31 +116,31 @@ async function validateUniqueEmail(email) {
     values: [email],
   });
 
-  if (results.rowCount > 0) {
+  if (result.rowCount > 0) {
     throw new ValidationError({
       message: "The email address provided is already registered.",
-      action: "Try again with a different email.",
+      action: "Please try again with a different email.",
     });
   }
 }
 
 async function validateUniqueUsername(username) {
-  const results = await database.query({
+  const result = await database.query({
     text: `
-      SELECT
-        username
-      FROM
-        users
-      WHERE
-        LOWER(username) = LOWER($1)
-      ;`,
+        SELECT
+          username
+        FROM
+          users
+        WHERE
+          LOWER(username) = LOWER($1)
+        ;`,
     values: [username],
   });
 
-  if (results.rowCount > 0) {
+  if (result.rowCount > 0) {
     throw new ValidationError({
       message: "The username provided is already registered.",
-      action: "Try again with a different username.",
+      action: "Please try again with a different username.",
     });
   }
 }

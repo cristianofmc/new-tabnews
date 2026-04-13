@@ -16,8 +16,8 @@ describe("GET /api/v1/users/[username]", () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: "SameJimmyFiveCase",
-          email: "same_jimmyfive_case@host.testemail",
+          username: "Same_Jimmy_Five_Case",
+          email: "same_jimmy_five_case@host.testemail",
           password: "Test@123",
         }),
       });
@@ -25,16 +25,16 @@ describe("GET /api/v1/users/[username]", () => {
       expect(returnRequest.response.status).toBe(201);
 
       const returnRequest2 = await orchestrator.request(
-        "/api/v1/users/SameJimmyFiveCase",
+        "/api/v1/users/same_Jimmy_five_case",
       );
       expect(returnRequest2.response.status).toBe(200);
 
       const body = returnRequest2.body;
       expect(body).toEqual({
         id: body.id,
-        username: "SameJimmyFiveCase",
-        email: "same_jimmyfive_case@host.testemail",
-        password: "Test@123",
+        username: "same_jimmy_five_case",
+        email: "same_jimmy_five_case@host.testemail",
+        password: body.password,
         created_at: body.created_at,
         updated_at: body.updated_at,
       });
@@ -67,9 +67,9 @@ describe("GET /api/v1/users/[username]", () => {
       const body = returnRequest2.body;
       expect(body).toEqual({
         id: body.id,
-        username: "CaseJimmyFiveCase",
+        username: "casejimmyfivecase",
         email: "case_jimmyfive_case@host.testemail",
-        password: "Test@123",
+        password: body.password,
         created_at: body.created_at,
         updated_at: body.updated_at,
       });
