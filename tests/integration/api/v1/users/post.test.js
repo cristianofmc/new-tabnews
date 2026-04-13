@@ -87,7 +87,7 @@ describe("POST /api/v1/users", () => {
       expect(returnRequest2.body).toEqual({
         name: "ValidationError",
         message: "The email address provided is already registered.",
-        action: "Try again with a different email.",
+        action: "Please try again with a different email.",
         status_code: 400,
       });
     });
@@ -124,7 +124,7 @@ describe("POST /api/v1/users", () => {
       expect(returnRequest2.body).toEqual({
         name: "ValidationError",
         message: "The username provided is already registered.",
-        action: "Try again with a different username.",
+        action: "Please try again with a different username.",
         status_code: 400,
       });
     });

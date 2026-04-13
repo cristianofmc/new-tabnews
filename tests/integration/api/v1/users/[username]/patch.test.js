@@ -56,7 +56,8 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(body).toEqual({
         name: "ValidationError",
         message: "No data provided in the request body.",
-        action: "Please provide at least one valid field: username, email.",
+        action:
+          "Please provide at least one valid field: username, email, password.",
         status_code: 400,
       });
     });
@@ -99,7 +100,7 @@ describe("PATCH /api/v1/users/[username]", () => {
         name: "ValidationError",
         message: "The username provided is invalid.",
         action:
-          "Username must be between 3 and 30 characters, contain only letters, numbers or underscores, cannot start or end with underscores, and cannot have two consecutive underscores.",
+          "Please ensure that the username is between 3 and 30 characters, contains only letters, numbers or underscores, does not start or end with underscores, and does not have two consecutive underscores.",
         status_code: 400,
       });
     });
@@ -130,7 +131,7 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(body).toEqual({
         name: "ValidationError",
         message: "The email address provided is already registered.",
-        action: "Try again with a different email.",
+        action: "Please try again with a different email.",
         status_code: 400,
       });
     });
@@ -151,12 +152,12 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(body).toEqual({
         name: "ValidationError",
         message: "The username provided is already registered.",
-        action: "Try again with a different username.",
+        action: "Please try again with a different username.",
         status_code: 400,
       });
     });
 
-    test("should ignore the password field if sent maliciously in the PATCH body", async () => {
+    test("should successfully update the password when sent in the PATCH body", async () => {
       await orchestrator.request("/api/v1/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -168,35 +169,40 @@ describe("PATCH /api/v1/users/[username]", () => {
       });
 
       const { response, body } = await orchestrator.request(
-        "/api/v1/users/SecureJimmyFive",
+        "/api/v1/users/secure_jimmy_five",
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: "UpdatedSecureJimmyFive",
-            password: "HackerPassword@999",
+            password: "NewSecurePassword@456",
           }),
         },
       );
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(200);
+
       expect(body).toEqual({
-        name: "ValidationError",
-        message: "Unrecognized or not allowed fields provided: 'password'.",
-        action:
-          "Please remove these fields. The only allowed fields are: username, email.",
-        status_code: 400,
+        id: body.id,
+        username: "secure_jimmy_five",
+        email: "secure_jimmy@host.testemail",
+        password: body.password,
+        created_at: body.created_at,
+        updated_at: body.updated_at,
       });
 
       const userInDatabase = await user.findOneByUsername("secure_jimmy_five");
-      expect(userInDatabase.username).toBe("secure_jimmy_five");
+
+      const newPasswordWorks = await password.compare(
+        "NewSecurePassword@456",
+        userInDatabase.password,
+      );
+      expect(newPasswordWorks).toBe(true);
 
       const oldPasswordStillWorks = await password.compare(
         "OriginalPassword@123",
         userInDatabase.password,
       );
-
-      expect(oldPasswordStillWorks).toBe(true);
+      expect(oldPasswordStillWorks).toBe(false);
     });
 
     test("should update an existing user with valid data", async () => {
