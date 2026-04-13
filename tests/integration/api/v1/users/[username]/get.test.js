@@ -10,30 +10,18 @@ beforeAll(async () => {
 describe("GET /api/v1/users/[username]", () => {
   describe("Anonymous user", () => {
     test("Username should match with exact case", async () => {
-      const returnRequest = await orchestrator.request("/api/v1/users/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: "Same_Jimmy_Five_Case",
-          email: "same_jimmy_five_case@host.testemail",
-          password: "Test@123",
-        }),
-      });
+      const created_user = await orchestrator.createUser();
 
-      expect(returnRequest.response.status).toBe(201);
-
-      const returnRequest2 = await orchestrator.request(
-        "/api/v1/users/same_Jimmy_five_case",
+      const returnRequest = await orchestrator.request(
+        `/api/v1/users/${created_user.username}`,
       );
-      expect(returnRequest2.response.status).toBe(200);
+      expect(returnRequest.response.status).toBe(200);
 
-      const body = returnRequest2.body;
+      const body = returnRequest.body;
       expect(body).toEqual({
         id: body.id,
-        username: "same_jimmy_five_case",
-        email: "same_jimmy_five_case@host.testemail",
+        username: created_user.username,
+        email: created_user.email,
         password: body.password,
         created_at: body.created_at,
         updated_at: body.updated_at,
@@ -45,30 +33,20 @@ describe("GET /api/v1/users/[username]", () => {
     });
 
     test("Username should mismatch with case", async () => {
-      const returnRequest = await orchestrator.request("/api/v1/users/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: "CaseJimmyFiveCase",
-          email: "case_jimmyfive_case@host.testemail",
-          password: "Test@123",
-        }),
+      const created_user = await orchestrator.createUser({
+        username: "CaseJimmyFiveCase",
       });
 
-      expect(returnRequest.response.status).toBe(201);
-
-      const returnRequest2 = await orchestrator.request(
+      const returnRequest = await orchestrator.request(
         "/api/v1/users/casejimmyfivecase",
       );
-      expect(returnRequest2.response.status).toBe(200);
+      expect(returnRequest.response.status).toBe(200);
 
-      const body = returnRequest2.body;
+      const body = returnRequest.body;
       expect(body).toEqual({
         id: body.id,
         username: "casejimmyfivecase",
-        email: "case_jimmyfive_case@host.testemail",
+        email: created_user.email,
         password: body.password,
         created_at: body.created_at,
         updated_at: body.updated_at,
