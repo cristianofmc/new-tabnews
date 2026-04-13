@@ -106,23 +106,21 @@ describe("PATCH /api/v1/users/[username]", () => {
     });
 
     test("should not update to an email that is already in use by another user", async () => {
-      await orchestrator.request("/api/v1/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: "AnotherJimmyFive",
-          email: "conflict@jimmy.five",
-          password: "TestPassword123",
-        }),
+      const created_user = await orchestrator.createUser({
+        email: "first_Jimmy_five@email.testemail",
+      });
+
+      const created_user2 = await orchestrator.createUser({
+        email: "second_Jimmy_five@email.testemail",
       });
 
       const { response, body } = await orchestrator.request(
-        "/api/v1/users/EmptyPayloadUser",
+        `/api/v1/users/${created_user.username}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: "conflict@jimmy.five",
+            email: created_user2.email,
           }),
         },
       );
@@ -137,13 +135,16 @@ describe("PATCH /api/v1/users/[username]", () => {
     });
 
     test("should not update to a username that is already in use by another user", async () => {
+      const created_user = await orchestrator.createUser();
+      const created_user2 = await orchestrator.createUser();
+
       const { response, body } = await orchestrator.request(
-        "/api/v1/users/EmptyPayloadUser",
+        `/api/v1/users/${created_user.username}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: "AnotherJimmyFive",
+            username: created_user2.username,
           }),
         },
       );
@@ -158,18 +159,10 @@ describe("PATCH /api/v1/users/[username]", () => {
     });
 
     test("should successfully update the password when sent in the PATCH body", async () => {
-      await orchestrator.request("/api/v1/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: "secure_jimmy_five",
-          email: "secure_jimmy@host.testemail",
-          password: "OriginalPassword@123",
-        }),
-      });
+      const created_user = await orchestrator.createUser();
 
       const { response, body } = await orchestrator.request(
-        "/api/v1/users/secure_jimmy_five",
+        `/api/v1/users/${created_user.username}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -183,14 +176,16 @@ describe("PATCH /api/v1/users/[username]", () => {
 
       expect(body).toEqual({
         id: body.id,
-        username: "secure_jimmy_five",
-        email: "secure_jimmy@host.testemail",
+        username: created_user.username,
+        email: created_user.email,
         password: body.password,
         created_at: body.created_at,
         updated_at: body.updated_at,
       });
 
-      const userInDatabase = await user.findOneByUsername("secure_jimmy_five");
+      const userInDatabase = await user.findOneByUsername(
+        created_user.username,
+      );
 
       const newPasswordWorks = await password.compare(
         "NewSecurePassword@456",
@@ -199,9 +194,10 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(newPasswordWorks).toBe(true);
 
       const oldPasswordStillWorks = await password.compare(
-        "OriginalPassword@123",
+        created_user.password,
         userInDatabase.password,
       );
+
       expect(oldPasswordStillWorks).toBe(false);
     });
 
