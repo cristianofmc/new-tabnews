@@ -78,6 +78,30 @@ async function updateByUsername(currentUsername, updateData) {
   return result.rows[0];
 }
 
+async function findOneByEmail(email) {
+  const result = await database.query({
+    text: `
+        SELECT
+          *
+        FROM
+          users
+        WHERE
+          LOWER(email) = LOWER($1)
+        LIMIT
+          1
+        ;`,
+    values: [email],
+  });
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError({
+      message: "The email provided was not found.",
+      action: "Please check that the email was entered correctly.",
+    });
+  }
+  return result.rows[0];
+}
+
 async function findOneByUsername(username) {
   const result = await database.query({
     text: `
@@ -145,5 +169,5 @@ async function validateUniqueUsername(username) {
   }
 }
 
-const user = { create, findOneByUsername, updateByUsername };
+const user = { create, findOneByUsername, findOneByEmail, updateByUsername };
 export default user;
