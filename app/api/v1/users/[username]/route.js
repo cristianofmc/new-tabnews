@@ -19,20 +19,13 @@ async function patchHandler(context) {
   const username = context.req.param("username");
   const updateData = await context.req.json();
 
-  const allowedFields = ["username", "email", "password"];
-  validator.validatePayload(updateData, allowedFields);
+  const updateSchema = {
+    username: { type: "username", required: false },
+    email: { type: "email", required: false },
+    password: { type: "password", required: false },
+  };
 
-  if (updateData.username !== undefined) {
-    validator.validateUsername(updateData.username);
-  }
-
-  if (updateData.email !== undefined) {
-    validator.validateEmail(updateData.email);
-  }
-
-  if (updateData.password !== undefined) {
-    validator.validatePassword(updateData.password);
-  }
+  validator.validate(updateData, updateSchema);
 
   const updatedUser = await user.updateByUsername(username, updateData);
 

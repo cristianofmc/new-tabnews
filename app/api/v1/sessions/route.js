@@ -1,9 +1,7 @@
 import { handle } from "hono/vercel";
 import { createEndpoint } from "#infra/endpoint.js";
 import validator from "#infra/validators.js";
-import { UnauthorizedError } from "#infra/errors.js";
-import user from "#models/user.js";
-import password from "#models/password.js";
+import authentication from "#models/authentication.js";
 
 const endpoint = createEndpoint();
 
@@ -11,33 +9,17 @@ endpoint.post("*", postHandler);
 
 async function postHandler(context) {
   const userInputValues = await context.req.json();
+  const loginSchema = {
+    email: { type: "notEmptyText", required: true },
+    password: { type: "notEmptyText", required: true },
+  };
 
-  const requiredFields = ["email", "password"];
+  validator.validate(userInputValues, loginSchema);
 
-  validator.validatePayload(userInputValues, requiredFields, requiredFields);
-
-  validator.validateEmail(userInputValues.email);
-  validator.validateNotBlank(userInputValues.password, "password");
-
-  try {
-    const userFound = await user.findOneByEmail(userInputValues.email);
-    const correctPasswordMatch = await password.compare(
-      userInputValues.password,
-      userFound.password,
-    );
-
-    if (!correctPasswordMatch) {
-      throw new UnauthorizedError({
-        message: "Incorrect password sent.",
-        action: "Please verify that the submitted data is correct.",
-      });
-    }
-  } catch {
-    throw new UnauthorizedError({
-      message: "Incorrect authentication data.",
-      action: "Please verify that the submitted data is correct.",
-    });
-  }
+  await authentication.getAuthenticatedUser(
+    userInputValues.email,
+    userInputValues.password,
+  );
 
   return context.json({}, 201);
 }

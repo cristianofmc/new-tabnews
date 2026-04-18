@@ -25,6 +25,7 @@ describe("POST /api/v1/sessions", () => {
         },
       );
 
+      console.log(response.status, body);
       expect(response.status).toBe(401);
 
       expect(body).toEqual({
