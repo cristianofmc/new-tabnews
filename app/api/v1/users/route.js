@@ -10,13 +10,13 @@ endpoint.post("*", postHandler);
 async function postHandler(context) {
   const userInputValues = await context.req.json();
 
-  const requiredFields = ["username", "email", "password"];
+  const userCreationSchema = {
+    username: { type: "username", required: true },
+    email: { type: "email", required: true },
+    password: { type: "password", required: true },
+  };
 
-  validator.validatePayload(userInputValues, requiredFields, requiredFields);
-
-  validator.validateUsername(userInputValues.username);
-  validator.validateEmail(userInputValues.email);
-  validator.validateNotBlank(userInputValues.password, "password");
+  validator.validate(userInputValues, userCreationSchema);
 
   const newUser = await user.create(userInputValues);
 

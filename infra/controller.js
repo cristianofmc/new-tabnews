@@ -3,17 +3,21 @@ import {
   ValidationError,
   NotFoundError,
   MethodNotAllowedError,
+  UnauthorizedError,
 } from "#infra/errors.js";
 
 const controller = {
   errorHandlers: {
     onError(error, context) {
-      if (error instanceof ValidationError || error instanceof NotFoundError) {
+      if (
+        error instanceof ValidationError ||
+        error instanceof NotFoundError ||
+        error instanceof UnauthorizedError
+      ) {
         return context.json(error, error.statusCode);
       }
 
       const publicErrorObject = new InternalServerError({
-        statusCode: error.statusCode,
         cause: error,
       });
 
