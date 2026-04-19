@@ -1,6 +1,7 @@
 import orchestrator from "#tests/orchestrator.js";
 import { version as uuidVersion } from "uuid";
 import session from "#models/session.js";
+import setCookieParsers from "set-cookie-parser";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -27,7 +28,6 @@ describe("POST /api/v1/sessions", () => {
         },
       );
 
-      console.log(response.status, body);
       expect(response.status).toBe(401);
 
       expect(body).toEqual({
@@ -94,7 +94,7 @@ describe("POST /api/v1/sessions", () => {
       });
     });
 
-    test("should not create session with correct data", async () => {
+    test("should create session with correct data", async () => {
       const newUser = await orchestrator.createUser({ password: "!23NoMad" });
 
       const { response, body } = await orchestrator.request(
@@ -136,6 +136,19 @@ describe("POST /api/v1/sessions", () => {
       expect(Date.parse(expiresAt)).toBe(
         Date.parse(createdAt) + session.EXPIRATION_IN_MILLISECONDS,
       );
+
+      const parsedSetCookie = setCookieParsers(response, { map: true });
+
+      expect(parsedSetCookie["__Host-session_id"]).toEqual({
+        name: "__Host-session_id",
+        value: body.token,
+        maxAge: session.EXPIRATION_IN_MILLISECONDS / 1000,
+        partitioned: true,
+        path: "/",
+        httpOnly: true,
+        secure: true,
+        sameSite: "Strict",
+      });
     });
   });
 });

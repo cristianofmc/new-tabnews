@@ -3,6 +3,7 @@ import { createEndpoint } from "#infra/endpoint.js";
 import validator from "#infra/validators.js";
 import authentication from "#models/authentication.js";
 import session from "#models/session.js";
+import { setCookie } from "hono/cookie";
 
 const endpoint = createEndpoint();
 
@@ -22,6 +23,15 @@ async function postHandler(context) {
     userInputValues.password,
   );
   const newSession = await session.create(authenticatedUser.id);
+
+  setCookie(context, "__Host-session_id", newSession.token, {
+    path: "/",
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+    maxAge: session.EXPIRATION_IN_MILLISECONDS / 1000,
+    partitioned: true,
+  });
 
   return context.json(newSession, 201);
 }
