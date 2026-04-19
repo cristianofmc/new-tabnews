@@ -2,6 +2,7 @@ import { handle } from "hono/vercel";
 import { createEndpoint } from "#infra/endpoint.js";
 import validator from "#infra/validators.js";
 import authentication from "#models/authentication.js";
+import session from "#models/session.js";
 
 const endpoint = createEndpoint();
 
@@ -16,12 +17,13 @@ async function postHandler(context) {
 
   validator.validate(userInputValues, loginSchema);
 
-  await authentication.getAuthenticatedUser(
+  const authenticatedUser = await authentication.getAuthenticatedUser(
     userInputValues.email,
     userInputValues.password,
   );
+  const newSession = await session.create(authenticatedUser.id);
 
-  return context.json({}, 201);
+  return context.json(newSession, 201);
 }
 
 const handler = handle(endpoint);
