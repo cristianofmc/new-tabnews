@@ -1,4 +1,5 @@
 import database from "#infra/database.js";
+import { UnauthorizedError } from "#infra/errors.js";
 import crypto from "node:crypto";
 
 const EXPIRATION_IN_MILLISECONDS = 60 * 60 * 24 * 30 * 1000;
@@ -32,6 +33,13 @@ async function runSelectTokenQuery(sessionToken) {
       ;`,
     values: [sessionToken],
   });
+
+  if (results.rowCount === 0) {
+    throw new UnauthorizedError({
+      message: "The user does not have an active session.",
+      action: "Please check if this user is logged in and try again.",
+    });
+  }
 
   return results.rows[0];
 }
