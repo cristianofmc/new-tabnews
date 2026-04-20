@@ -27,7 +27,7 @@
     "services:down": "podman compose -f infra/compose.yaml down",
     "services:stop": "podman compose -f infra/compose.yaml stop",
     "services:wait:database": "node infra/scripts/wait_for_postgres.js",
-    "migrations:create": "node-pg-migrate create -m infra/migrations",
+    "migrations:create": "node infra/scripts/create_migration.js",
     "migrations:up": "node-pg-migrate -m infra/migrations --envPath .env.development up",
     "lint:spell:check": "cspell \"**\"",
     "lint:prettier:check": "prettier --check .",
