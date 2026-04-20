@@ -11,6 +11,31 @@ async function create(userId) {
   return newSession;
 }
 
+async function findOneValidByToken(sessionToken) {
+  const sessionFound = await runSelectTokenQuery(sessionToken);
+  return sessionFound;
+}
+
+async function runSelectTokenQuery(sessionToken) {
+  const results = await database.query({
+    text: `
+      SELECT
+        *
+      FROM
+        sessions
+      WHERE
+        token = $1
+        AND
+        expires_at > NOW()
+      LIMIT
+        1
+      ;`,
+    values: [sessionToken],
+  });
+
+  return results.rows[0];
+}
+
 async function runInsertQuery(token, userId, expiresAt) {
   const result = await database.query({
     text: `
@@ -27,6 +52,6 @@ async function runInsertQuery(token, userId, expiresAt) {
   return result.rows[0];
 }
 
-const session = { create, EXPIRATION_IN_MILLISECONDS };
+const session = { create, findOneValidByToken, EXPIRATION_IN_MILLISECONDS };
 
 export default session;
