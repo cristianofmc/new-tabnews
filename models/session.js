@@ -20,25 +20,26 @@ async function findOneValidByToken(sessionToken) {
 }
 
 async function renew(sessionId) {
-  const expiresAt = new Date(Date.now() + EXPIRATION_IN_MILLISECONDS);
-  const renewedSessionObject = runUpdateQuery(sessionId, expiresAt);
-  return renewedSessionObject;
+  return await updateSessionLifetime(sessionId, "30 days");
 }
 
-async function runUpdateQuery(sessionId, expiresAt) {
+async function expireById(sessionId) {
+  return await updateSessionLifetime(sessionId, "-1 year");
+}
+
+async function updateSessionLifetime(sessionId, intervalString) {
   const results = await database.query({
     text: `
-      UPDATE
-        sessions
+      UPDATE sessions
       SET
         updated_at = NOW(),
-        expires_at = $2
+        expires_at = NOW() + $2::interval
       WHERE
         id = $1
       RETURNING
-        *
-      ;`,
-    values: [sessionId, expiresAt],
+        *;
+    `,
+    values: [sessionId, intervalString],
   });
   return results.rows[0];
 }
@@ -90,6 +91,7 @@ const session = {
   create,
   findOneValidByToken,
   renew,
+  expireById,
   EXPIRATION_IN_MILLISECONDS,
   COOKIE_NAME,
 };
