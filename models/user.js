@@ -127,6 +127,30 @@ async function findOneByUsername(username) {
   return result.rows[0];
 }
 
+async function findOneById(id) {
+  const result = await database.query({
+    text: `
+        SELECT
+          *
+        FROM
+          users
+        WHERE
+          id = $1
+        LIMIT
+          1
+        ;`,
+    values: [id],
+  });
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError({
+      message: "The id provided was not found.",
+      action: "Please check that the id was entered correctly.",
+    });
+  }
+  return result.rows[0];
+}
+
 async function validateUniqueEmail(email) {
   const result = await database.query({
     text: `
@@ -169,5 +193,11 @@ async function validateUniqueUsername(username) {
   }
 }
 
-const user = { create, findOneByUsername, findOneByEmail, updateByUsername };
+const user = {
+  create,
+  findOneByUsername,
+  findOneByEmail,
+  findOneById,
+  updateByUsername,
+};
 export default user;

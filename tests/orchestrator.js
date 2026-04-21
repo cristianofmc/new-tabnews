@@ -3,6 +3,7 @@ import { query } from "#infra/database.js";
 import migrator from "#models/migrator.js";
 import user from "#models/user.js";
 import { faker } from "@faker-js/faker";
+import session from "#models/session.js";
 
 async function request(path, options = {}) {
   const baseUrl = process.env.APP_URL || "http://localhost:3000";
@@ -68,12 +69,17 @@ async function createUser(userObject = {}) {
   return newUser;
 }
 
+async function createSession(userId) {
+  return await session.create(userId);
+}
+
 const orchestrator = {
   waitForAllServices,
   cleanDatabase,
   runPendingMigrations,
   request,
   createUser,
+  createSession,
 };
 
 export default orchestrator;
