@@ -139,14 +139,12 @@ describe("POST /api/v1/sessions", () => {
 
       const parsedSetCookie = setCookieParsers(response, { map: true });
 
-      expect(parsedSetCookie["__Host-session_id"]).toEqual({
-        name: "__Host-session_id",
+      expect(parsedSetCookie[session.COOKIE_NAME]).toEqual({
+        name: session.COOKIE_NAME,
         value: body.token,
         maxAge: session.EXPIRATION_IN_MILLISECONDS / 1000,
-        partitioned: true,
         path: "/",
         httpOnly: true,
-        secure: true,
         sameSite: "Strict",
       });
     });

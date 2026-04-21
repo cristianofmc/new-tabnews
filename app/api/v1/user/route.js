@@ -3,15 +3,18 @@ import { createEndpoint } from "#infra/endpoint.js";
 import user from "#models/user.js";
 import { getCookie } from "hono/cookie";
 import session from "#models/session.js";
-
+import controller from "#infra/controller.js";
 const endpoint = createEndpoint();
 
 endpoint.get("*", getHandler);
 
 async function getHandler(context) {
-  const sessionToken = getCookie(context, "__Host-session_id");
+  const sessionToken = getCookie(context, session.COOKIE_NAME);
 
   const sessionObject = await session.findOneValidByToken(sessionToken);
+  const renewedSessionObject = await session.renew(sessionObject.id);
+  controller.setSessionCookie(renewedSessionObject.token, context);
+
   const userFound = await user.findOneById(sessionObject.user_id);
   return context.json(userFound, 200);
 }
