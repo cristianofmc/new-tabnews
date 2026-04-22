@@ -19,6 +19,17 @@ function setSessionCookie(sessionToken, context) {
   });
 }
 
+function clearSessionCookie(context) {
+  setCookie(context, session.COOKIE_NAME, "invalid", {
+    path: "/",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+    maxAge: -1,
+    partitioned: process.env.NODE_ENV === "production",
+  });
+}
+
 function onError(error, context) {
   if (
     error instanceof ValidationError ||
@@ -49,6 +60,7 @@ const controller = {
     onNoMatch,
   },
   setSessionCookie,
+  clearSessionCookie,
 };
 
 export default controller;
