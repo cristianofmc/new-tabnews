@@ -6,6 +6,7 @@ datname
 esbenp
 husky
 jimmyfive
+mailcatcher
 pg_isready
 pgmigrations
 prettier
