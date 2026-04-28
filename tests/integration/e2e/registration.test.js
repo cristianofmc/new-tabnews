@@ -34,7 +34,14 @@ describe("E2E registration happy path", () => {
     });
   });
 
-  test("Receive activation email", async () => {});
+  test("Receive activation email", async () => {
+    const lastEmail = await orchestrator.getLastEmail();
+
+    expect(lastEmail.sender).toBe("<contact@cristianofelipe.com>");
+    expect(lastEmail.recipients[0]).toBe("<newjimmyfive@host.testemail>");
+    expect(lastEmail.subject).toBe("Please activate your account.");
+    expect(lastEmail.text).toContain("new_jimmy_five");
+  });
 
   test("Activate account", async () => {});
 

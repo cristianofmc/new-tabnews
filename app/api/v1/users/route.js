@@ -2,6 +2,7 @@ import { handle } from "hono/vercel";
 import { createEndpoint } from "#infra/endpoint.js";
 import user from "#models/user.js";
 import validator from "#infra/validators.js";
+import activation from "#models/activation.js";
 
 const endpoint = createEndpoint();
 
@@ -20,6 +21,7 @@ async function postHandler(context) {
 
   const newUser = await user.create(userInputValues);
 
+  await activation.sendEmailToUser(newUser);
   return context.json(newUser, 201);
 }
 
