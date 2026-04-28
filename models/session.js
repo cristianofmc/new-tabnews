@@ -1,6 +1,6 @@
-import database from "#infra/database.js";
 import { UnauthorizedError } from "#infra/errors.js";
 import crypto from "node:crypto";
+import sessionRepository from "#models/session.repository.js";
 
 const EXPIRATION_IN_MILLISECONDS = 60 * 60 * 24 * 30 * 1000;
 const COOKIE_NAME =
@@ -8,83 +8,31 @@ const COOKIE_NAME =
 
 async function create(userId) {
   const token = crypto.randomBytes(48).toString("hex");
-
   const expiresAt = new Date(Date.now() + EXPIRATION_IN_MILLISECONDS);
-  const newSession = await runInsertQuery(token, userId, expiresAt);
+
+  const newSession = await sessionRepository.insert(token, userId, expiresAt);
   return newSession;
 }
 
 async function findOneValidByToken(sessionToken) {
-  const sessionFound = await runSelectTokenQuery(sessionToken);
-  return sessionFound;
-}
+  const sessionFound = await sessionRepository.findValidByToken(sessionToken);
 
-async function renew(sessionId) {
-  return await updateSessionLifetime(sessionId, "30 days");
-}
-
-async function expireById(sessionId) {
-  return await updateSessionLifetime(sessionId, "-1 year");
-}
-
-async function updateSessionLifetime(sessionId, intervalString) {
-  const results = await database.query({
-    text: `
-      UPDATE sessions
-      SET
-        updated_at = NOW(),
-        expires_at = NOW() + $2::interval
-      WHERE
-        id = $1
-      RETURNING
-        *;
-    `,
-    values: [sessionId, intervalString],
-  });
-  return results.rows[0];
-}
-
-async function runSelectTokenQuery(sessionToken) {
-  const results = await database.query({
-    text: `
-      SELECT
-        *
-      FROM
-        sessions
-      WHERE
-        token = $1
-        AND
-        expires_at > NOW()
-      LIMIT
-        1
-      ;`,
-    values: [sessionToken],
-  });
-
-  if (results.rowCount === 0) {
+  if (!sessionFound) {
     throw new UnauthorizedError({
       message: "The user does not have an active session.",
       action: "Please check if this user is logged in and try again.",
     });
   }
 
-  return results.rows[0];
+  return sessionFound;
 }
 
-async function runInsertQuery(token, userId, expiresAt) {
-  const result = await database.query({
-    text: `
-        INSERT INTO
-          sessions (token, user_id, expires_at)
-        VALUES
-          ($1, $2, $3)
-        RETURNING
-          *
-        ;`,
-    values: [token, userId, expiresAt],
-  });
+async function renew(sessionId) {
+  return await sessionRepository.updateLifetime(sessionId, "30 days");
+}
 
-  return result.rows[0];
+async function expireById(sessionId) {
+  return await sessionRepository.updateLifetime(sessionId, "-1 year");
 }
 
 const session = {

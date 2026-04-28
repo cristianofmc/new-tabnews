@@ -21,7 +21,9 @@ async function postHandler(context) {
 
   const newUser = await user.create(userInputValues);
 
-  await activation.sendEmailToUser(newUser);
+  const activationToken = await activation.create(newUser.id);
+  await activation.sendEmailToUser(newUser, activationToken);
+
   return context.json(newUser, 201);
 }
 

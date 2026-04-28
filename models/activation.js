@@ -1,27 +1,44 @@
 import email from "#infra/email.js";
+import activationRepository from "#models/activation.repository.js";
+import config from "#infra/config.js";
 
-async function sendEmailToUser(user) {
+const EXPIRATION_IN_MILLISECONDS = 60 * 15 * 1000; // 15 minutes
+
+async function create(userId) {
+  const expiresAt = new Date(Date.now() + EXPIRATION_IN_MILLISECONDS);
+  const newToken = await activationRepository.insert(userId, expiresAt);
+  return newToken;
+}
+
+async function findOneByUserId(userId) {
+  const newToken = await activationRepository.select(userId);
+  return newToken;
+}
+
+async function sendEmailToUser(user, activationToken) {
   await email.send({
-    from: "Cristiano Felipe <contact@cristianofelipe.com>",
+    from: `${config.appName} <${config.appEmail}>`,
     to: user.email,
     subject: "Please activate your account.",
     text: `Hi ${user.username},
 
-Welcome to Cristiano Felipe connection,
+Welcome to ${config.appName},
 please access the link below to activate your account:
 
-https://link...
+${config.origin}/sign_up/activate/${activationToken.id}
 
-If you did not sign up for an account with Cristiano Felipe connection, please ignore this email. No further action is required.
+If you did not sign up for an account with ${config.appName}, please ignore this email. No further action is required.
 
 Best regards,
-The Cristiano Felipe Team.
+The ${config.appName} Team.
 `,
   });
 }
 
 const activation = {
   sendEmailToUser,
+  create,
+  findOneByUserId,
 };
 
 export default activation;
