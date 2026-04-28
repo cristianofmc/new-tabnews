@@ -23,6 +23,7 @@ describe("GET /api/v1/users/[username]", () => {
         username: created_user.username,
         email: created_user.email,
         password: body.password,
+        features: [],
         created_at: body.created_at,
         updated_at: body.updated_at,
       });
@@ -48,6 +49,7 @@ describe("GET /api/v1/users/[username]", () => {
         username: "casejimmyfivecase",
         email: created_user.email,
         password: body.password,
+        features: [],
         created_at: body.created_at,
         updated_at: body.updated_at,
       });

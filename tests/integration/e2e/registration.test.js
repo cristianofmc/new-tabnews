@@ -15,7 +15,7 @@ describe("E2E registration happy path", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username: "NewJimmyfive",
+        username: "New_Jimmy_Five",
         email: "newjimmyfive@host.testemail",
         password: "Test@123",
       }),
@@ -25,9 +25,10 @@ describe("E2E registration happy path", () => {
 
     expect(body).toEqual({
       id: body.id,
-      username: "NewJimmyfive",
+      username: "new_jimmy_five",
       email: "newjimmyfive@host.testemail",
       password: body.password,
+      features: [],
       created_at: body.created_at,
       updated_at: body.updated_at,
     });
