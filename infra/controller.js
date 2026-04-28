@@ -31,6 +31,15 @@ function clearSessionCookie(context) {
 }
 
 function onError(error, context) {
+  if (error instanceof SyntaxError && error.message.includes("JSON")) {
+    const publicErrorObject = new ValidationError({
+      message: "The request body does not contain a valid JSON.",
+      action:
+        "Please check the syntax of the submitted JSON or ensure the request body is not empty.",
+    });
+    return context.json(publicErrorObject, publicErrorObject.statusCode);
+  }
+
   if (
     error instanceof ValidationError ||
     error instanceof NotFoundError ||

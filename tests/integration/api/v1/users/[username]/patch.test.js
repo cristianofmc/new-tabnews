@@ -62,6 +62,27 @@ describe("PATCH /api/v1/users/[username]", () => {
       });
     });
 
+    test("should return 400 when sending a malformed JSON", async () => {
+      const { response, body } = await orchestrator.request(
+        "/api/v1/users/AnyUser",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: '{ "username": "JimmyFive"',
+        },
+      );
+
+      expect(response.status).toBe(400);
+
+      expect(body).toEqual({
+        name: "ValidationError",
+        message: "The request body does not contain a valid JSON.",
+        action:
+          "Please check the syntax of the submitted JSON or ensure the request body is not empty.",
+        status_code: 400,
+      });
+    });
+
     test("should return 400 when updating with an invalid email format", async () => {
       const { response, body } = await orchestrator.request(
         "/api/v1/users/EmptyPayloadUser",
