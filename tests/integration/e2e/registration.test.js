@@ -28,7 +28,7 @@ describe("E2E registration happy path", () => {
       username: "new_jimmy_five",
       email: "newjimmyfive@host.testemail",
       password: body.password,
-      features: [],
+      features: ["read:activation_token"],
       created_at: body.created_at,
       updated_at: body.updated_at,
     });
