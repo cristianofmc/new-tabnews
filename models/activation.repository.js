@@ -16,6 +16,28 @@ async function insert(userId, expiresAt) {
   return results.rows[0];
 }
 
+async function selectValid(tokenId, expiresAt) {
+  const result = await database.query({
+    text: `
+      SELECT
+        *
+      FROM
+        user_activation_tokens
+      WHERE
+        id = $1
+      AND
+        expires_at > $2
+      AND
+        used_at IS NULL
+      LIMIT
+        1
+      ;`,
+    values: [tokenId, expiresAt],
+  });
+
+  return result.rows[0] || null;
+}
+
 async function select(userId) {
   const result = await database.query({
     text: `
@@ -37,6 +59,7 @@ async function select(userId) {
 const activationRepository = {
   insert,
   select,
+  selectValid,
 };
 
 export default activationRepository;

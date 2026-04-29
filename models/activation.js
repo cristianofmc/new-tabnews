@@ -10,9 +10,10 @@ async function create(userId) {
   return newToken;
 }
 
-async function findOneByUserId(userId) {
-  const newToken = await activationRepository.select(userId);
-  return newToken;
+async function findOneValidTokenById(tokenId) {
+  const expiresAt = new Date(Date.now());
+  const validToken = await activationRepository.selectValid(tokenId, expiresAt);
+  return validToken;
 }
 
 async function sendEmailToUser(user, activationToken) {
@@ -38,7 +39,8 @@ The ${config.appName} Team.
 const activation = {
   sendEmailToUser,
   create,
-  findOneByUserId,
+  findOneValidTokenById,
+  EXPIRATION_IN_MILLISECONDS,
 };
 
 export default activation;

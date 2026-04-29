@@ -41,20 +41,34 @@ describe("E2E registration happy path", () => {
   test("Receive activation email", async () => {
     const lastEmail = await orchestrator.getLastEmail();
 
-    const activationToken = await activation.findOneByUserId(
-      createUserResponseBody.id,
-    );
-
-    console.log(activationToken);
-
+    const token = orchestrator.extractUUID(lastEmail.text);
     expect(lastEmail.sender).toBe(`<${config.appEmail}>`);
 
     expect(lastEmail.recipients[0]).toBe("<newjimmyfive@host.testemail>");
     expect(lastEmail.subject).toBe("Please activate your account.");
     expect(lastEmail.text).toContain("new_jimmy_five");
-    expect(lastEmail.text).toContain(activationToken.id);
+    expect(lastEmail.text).toContain(
+      `${config.origin}/sign_up/activate/${token}`,
+    );
 
-    console.log(lastEmail.text);
+    const validTokenObject = await activation.findOneValidTokenById(token);
+    expect(token).toBe(validTokenObject.id);
+    expect(validTokenObject.user_id).toBe(createUserResponseBody.id);
+    expect(validTokenObject.used_at).toBeNull();
+
+    vi.useFakeTimers({
+      now: new Date(Date.now() + activation.EXPIRATION_IN_MILLISECONDS),
+    });
+
+    const invalidTokenObject = await activation.findOneValidTokenById(token);
+    expect(invalidTokenObject).toBeNull();
+
+    vi.useRealTimers();
+
+    const otherValidTokenObject = await activation.findOneValidTokenById(token);
+    expect(token).toBe(otherValidTokenObject.id);
+    expect(otherValidTokenObject.user_id).toBe(createUserResponseBody.id);
+    expect(otherValidTokenObject.used_at).toBeNull();
   });
 
   test("Activate account", async () => {});
