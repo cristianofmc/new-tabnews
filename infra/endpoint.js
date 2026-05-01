@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import controller from "./controller.js";
-import { injectAnonymousOrUser } from "./middlewares/authorization.js";
+import controller from "#infra/controller.js";
+import { injectAnonymousOrUser } from "#infra/middlewares/authenticate.js";
 
 export function createEndpoint() {
   const endpoint = new Hono();

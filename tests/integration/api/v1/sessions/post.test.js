@@ -95,7 +95,9 @@ describe("POST /api/v1/sessions", () => {
     });
 
     test("should create session with correct data", async () => {
-      const newUser = await orchestrator.createUser({ password: "!23NoMad" });
+      const newUser = await orchestrator.createActivatedUser({
+        password: "!23NoMad",
+      });
 
       const { response, body } = await orchestrator.request(
         "/api/v1/sessions",
@@ -110,6 +112,9 @@ describe("POST /api/v1/sessions", () => {
           }),
         },
       );
+
+      console.log(response);
+      console.log(body);
 
       expect(response.status).toBe(201);
 

@@ -4,8 +4,10 @@ import { createEndpoint } from "#infra/endpoint.js";
 import authentication from "#models/authentication.js";
 import session from "#models/session.js";
 import controller from "#infra/controller.js";
-import { requireSchema } from "#infra/middlewares/schemaValidator.js";
-import { canRequest } from "#infra/middlewares/authorization.js";
+import { requireSchema } from "#infra/middlewares/validate.js";
+import { canRequest } from "#infra/middlewares/authorize.js";
+import { ForbiddenError } from "#infra/errors.js";
+import authorization from "#models/authorization.js";
 
 const endpoint = createEndpoint();
 
@@ -30,6 +32,13 @@ async function postHandler(context) {
     userInputValues.email,
     userInputValues.password,
   );
+
+  if (!authorization.can(authenticatedUser, "create:session")) {
+    throw new ForbiddenError({
+      message: "You do not have permission to log in.",
+      action: "Please contact support if you believe this is an error.",
+    });
+  }
 
   const newSession = await session.create(authenticatedUser.id);
   controller.setSessionCookie(newSession.token, context);
