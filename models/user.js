@@ -117,12 +117,18 @@ async function validateUniqueUsername(username) {
   }
 }
 
+async function setFeatures(userId, features) {
+  const updatedUser = await userRepository.updateFeatures(userId, features);
+  return updatedUser;
+}
+
 const user = {
   create,
   findOneByUsername,
   findOneByEmail,
   findOneById,
   updateByUsername,
+  setFeatures,
 };
 
 export default user;

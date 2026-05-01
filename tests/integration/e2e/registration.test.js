@@ -1,6 +1,7 @@
 import orchestrator from "#tests/orchestrator.js";
 import config from "#infra/config.js";
 import activation from "#models/activation.js";
+import user from "#models/user.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -11,6 +12,7 @@ beforeAll(async () => {
 
 describe("E2E registration happy path", () => {
   let createUserResponseBody;
+  let token;
   test("Create user account", async () => {
     const { response, body } = await orchestrator.request("/api/v1/users", {
       method: "POST",
@@ -41,7 +43,7 @@ describe("E2E registration happy path", () => {
   test("Receive activation email", async () => {
     const lastEmail = await orchestrator.getLastEmail();
 
-    const token = orchestrator.extractUUID(lastEmail.text);
+    token = orchestrator.extractUUID(lastEmail.text);
     expect(lastEmail.sender).toBe(`<${config.appEmail}>`);
 
     expect(lastEmail.recipients[0]).toBe("<newjimmyfive@host.testemail>");
@@ -60,8 +62,9 @@ describe("E2E registration happy path", () => {
       now: new Date(Date.now() + activation.EXPIRATION_IN_MILLISECONDS),
     });
 
-    const invalidTokenObject = await activation.findOneValidTokenById(token);
-    expect(invalidTokenObject).toBeNull();
+    await expect(activation.findOneValidTokenById(token)).rejects.toThrow(
+      "The activation token provided was not found in the system or has expired.",
+    );
 
     vi.useRealTimers();
 
@@ -71,7 +74,19 @@ describe("E2E registration happy path", () => {
     expect(otherValidTokenObject.used_at).toBeNull();
   });
 
-  test("Activate account", async () => {});
+  test("Activate account", async () => {
+    const { response, body } = await orchestrator.request(
+      `/api/v1/activations/${token}`,
+      { method: "PATCH" },
+    );
+
+    expect(response.status).toBe(200);
+
+    expect(Date.parse(body.used_at)).not.toBeNaN();
+
+    const activatedUser = await user.findOneByUsername("new_jimmy_five");
+    expect(activatedUser.features).toEqual(["create:session"]);
+  });
 
   test("Sign in", async () => {});
 

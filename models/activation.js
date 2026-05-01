@@ -1,6 +1,7 @@
 import email from "#infra/email.js";
 import activationRepository from "#models/activation.repository.js";
 import config from "#infra/config.js";
+import user from "#models/user.js";
 
 const EXPIRATION_IN_MILLISECONDS = 60 * 15 * 1000; // 15 minutes
 
@@ -12,8 +13,23 @@ async function create(userId) {
 
 async function findOneValidTokenById(tokenId) {
   const expiresAt = new Date(Date.now());
+
   const validToken = await activationRepository.selectValid(tokenId, expiresAt);
   return validToken;
+}
+
+async function markTokenAsUsed(activationTokenId) {
+  const expiresAt = new Date(Date.now());
+  const usedActivationToken = await activationRepository.updateUsedToken(
+    activationTokenId,
+    expiresAt,
+  );
+  return usedActivationToken;
+}
+
+async function activateUserByUserId(userId) {
+  const activatedUser = await user.setFeatures(userId, ["create:session"]);
+  return activatedUser;
 }
 
 async function sendEmailToUser(user, activationToken) {
@@ -40,6 +56,8 @@ const activation = {
   sendEmailToUser,
   create,
   findOneValidTokenById,
+  markTokenAsUsed,
+  activateUserByUserId,
   EXPIRATION_IN_MILLISECONDS,
 };
 

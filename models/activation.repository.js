@@ -1,4 +1,5 @@
 import database from "#infra/database.js";
+import { NotFoundError } from "#infra/errors.js";
 
 async function insert(userId, expiresAt) {
   const results = await database.query({
@@ -17,7 +18,7 @@ async function insert(userId, expiresAt) {
 }
 
 async function selectValid(tokenId, expiresAt) {
-  const result = await database.query({
+  const results = await database.query({
     text: `
       SELECT
         *
@@ -35,7 +36,15 @@ async function selectValid(tokenId, expiresAt) {
     values: [tokenId, expiresAt],
   });
 
-  return result.rows[0] || null;
+  if (results.rowCount === 0) {
+    throw new NotFoundError({
+      message:
+        "The activation token provided was not found in the system or has expired.",
+      action: "Please create a new account.",
+    });
+  }
+
+  return results.rows[0] || null;
 }
 
 async function select(userId) {
@@ -56,10 +65,42 @@ async function select(userId) {
   return result.rows[0] || null;
 }
 
+async function updateUsedToken(activationTokenId, expiresAt) {
+  const results = await database.query({
+    text: `
+      UPDATE
+        user_activation_tokens
+      SET
+        used_at = timezone('utc', now()),
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      AND
+        expires_at > $2
+      AND
+        used_at IS NULL
+      RETURNING
+          *
+      ;`,
+    values: [activationTokenId, expiresAt],
+  });
+
+  if (results.rowCount === 0) {
+    throw new NotFoundError({
+      message:
+        "The activation token provided was not found in the system or has expired.",
+      action: "Please create a new account.",
+    });
+  }
+
+  return results.rows[0];
+}
+
 const activationRepository = {
   insert,
   select,
   selectValid,
+  updateUsedToken,
 };
 
 export default activationRepository;
