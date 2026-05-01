@@ -1,9 +1,9 @@
 import { getCookie } from "hono/cookie";
 import session from "#models/session.js";
 import user from "#models/user.js";
-import { ForbiddenError } from "#infra/errors.js";
 
 const ANONYMOUS_USER = {
+  id: null,
   features: ["read:activation_token", "create:session", "create:user"],
 };
 
@@ -21,6 +21,7 @@ export async function injectAnonymousOrUser(context, next) {
 
     context.set("user", {
       ...userObject,
+      isAnonymous: false,
     });
   } catch (error) {
     console.log(error);
@@ -28,19 +29,4 @@ export async function injectAnonymousOrUser(context, next) {
   }
 
   await next();
-}
-
-export function canRequest(feature) {
-  return async (context, next) => {
-    const userTryingToRequest = context.get("user");
-
-    if (userTryingToRequest.features.includes(feature)) {
-      return await next();
-    }
-
-    throw new ForbiddenError({
-      message: "You do not have permission to perform this action.",
-      action: `Please check if your user has the '${feature}' feature.`,
-    });
-  };
 }
