@@ -4,6 +4,7 @@ import {
   NotFoundError,
   MethodNotAllowedError,
   UnauthorizedError,
+  ForbiddenError,
 } from "#infra/errors.js";
 import { setCookie } from "hono/cookie";
 import session from "#models/session.js";
@@ -40,10 +41,13 @@ function onError(error, context) {
     return context.json(publicErrorObject, publicErrorObject.statusCode);
   }
 
+  if (error instanceof UnauthorizedError) clearSessionCookie(context);
+
   if (
     error instanceof ValidationError ||
     error instanceof NotFoundError ||
-    error instanceof UnauthorizedError
+    error instanceof UnauthorizedError ||
+    error instanceof ForbiddenError
   ) {
     return context.json(error, error.statusCode);
   }

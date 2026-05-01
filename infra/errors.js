@@ -100,6 +100,27 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export class ForbiddenError extends Error {
+  constructor({ cause, message, action }) {
+    super(message || "Access denied.", {
+      cause,
+    });
+    this.name = "ForbiddenError";
+    this.action =
+      action || "Please check the required features before continuing.";
+    this.statusCode = 403;
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      message: this.message,
+      action: this.action,
+      status_code: this.statusCode,
+    };
+  }
+}
+
 export class MethodNotAllowedError extends Error {
   constructor() {
     super("This method is not allowed for this endpoint.");
