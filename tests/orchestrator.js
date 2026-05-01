@@ -4,6 +4,7 @@ import migrator from "#models/migrator.js";
 import user from "#models/user.js";
 import { faker } from "@faker-js/faker";
 import session from "#models/session.js";
+import activation from "#models/activation.js";
 
 const getAppUrl = () => process.env.APP_URL || "http://localhost:3000";
 const getEmailUrl = () =>
@@ -92,6 +93,11 @@ async function createUser(userObject = {}) {
   return newUser;
 }
 
+async function createActivatedUser(userObject = {}) {
+  const userCreated = await createUser(userObject);
+  return await activation.activateUserByUserId(userCreated.id);
+}
+
 async function createSession(userId) {
   return await session.create(userId);
 }
@@ -129,6 +135,7 @@ const orchestrator = {
   runPendingMigrations,
   request,
   createUser,
+  createActivatedUser,
   createSession,
   deleteAllEmails,
   getLastEmail,
