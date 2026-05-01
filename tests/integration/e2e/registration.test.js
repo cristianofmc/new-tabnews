@@ -11,7 +11,7 @@ beforeAll(async () => {
 });
 
 describe("E2E registration happy path", () => {
-  let createUserResponseBody;
+  let userResponseBody;
   let token;
   test("Create user account", async () => {
     const { response, body } = await orchestrator.request("/api/v1/users", {
@@ -27,7 +27,7 @@ describe("E2E registration happy path", () => {
     });
 
     expect(response.status).toBe(201);
-    createUserResponseBody = body;
+    userResponseBody = body;
 
     expect(body).toEqual({
       id: body.id,
@@ -55,7 +55,7 @@ describe("E2E registration happy path", () => {
 
     const validTokenObject = await activation.findOneValidTokenById(token);
     expect(token).toBe(validTokenObject.id);
-    expect(validTokenObject.user_id).toBe(createUserResponseBody.id);
+    expect(validTokenObject.user_id).toBe(userResponseBody.id);
     expect(validTokenObject.used_at).toBeNull();
 
     vi.useFakeTimers({
@@ -70,7 +70,7 @@ describe("E2E registration happy path", () => {
 
     const otherValidTokenObject = await activation.findOneValidTokenById(token);
     expect(token).toBe(otherValidTokenObject.id);
-    expect(otherValidTokenObject.user_id).toBe(createUserResponseBody.id);
+    expect(otherValidTokenObject.user_id).toBe(userResponseBody.id);
     expect(otherValidTokenObject.used_at).toBeNull();
   });
 
@@ -88,7 +88,21 @@ describe("E2E registration happy path", () => {
     expect(activatedUser.features).toEqual(["create:session"]);
   });
 
-  test("Sign in", async () => {});
+  test("Sign in", async () => {
+    const { response, body } = await orchestrator.request(`/api/v1/sessions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: "newjimmyfive@host.testemail",
+        password: "Test@123",
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(body.user_id).toBe(userResponseBody.id);
+  });
 
   test("Get user information", async () => {});
 });

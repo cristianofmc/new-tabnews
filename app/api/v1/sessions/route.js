@@ -1,28 +1,36 @@
 import { handle } from "hono/vercel";
 import { getCookie } from "hono/cookie";
 import { createEndpoint } from "#infra/endpoint.js";
-import validator from "#infra/validators.js";
 import authentication from "#models/authentication.js";
 import session from "#models/session.js";
 import controller from "#infra/controller.js";
+import { requireSchema } from "#infra/middlewares/schemaValidator.js";
+import { canRequest } from "#infra/middlewares/authorization.js";
+
 const endpoint = createEndpoint();
 
-endpoint.post("*", postHandler);
-endpoint.delete("*", deleteHandler);
+const loginSchema = {
+  email: { type: "notEmptyText", required: true },
+  password: { type: "notEmptyText", required: true },
+};
+
+endpoint.post(
+  "*",
+  requireSchema(loginSchema),
+  canRequest("create:session"),
+  postHandler,
+);
+
+endpoint.delete("*", requireSchema({}), deleteHandler);
 
 async function postHandler(context) {
-  const userInputValues = await context.req.json();
-  const loginSchema = {
-    email: { type: "notEmptyText", required: true },
-    password: { type: "notEmptyText", required: true },
-  };
-
-  validator.validate(userInputValues, loginSchema);
+  const userInputValues = context.get("validatedBody");
 
   const authenticatedUser = await authentication.getAuthenticatedUser(
     userInputValues.email,
     userInputValues.password,
   );
+
   const newSession = await session.create(authenticatedUser.id);
   controller.setSessionCookie(newSession.token, context);
   return context.json(newSession, 201);
