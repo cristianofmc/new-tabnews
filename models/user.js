@@ -50,9 +50,9 @@ async function updateByUsername(currentUsername, updateData) {
   }
 
   return await userRepository.update(currentUser.id, {
-    username: newUsername,
-    email: newEmail,
-    hashedPassword,
+    username: newUsername || null,
+    email: newEmail || null,
+    hashedPassword: hashedPassword || null,
   });
 }
 

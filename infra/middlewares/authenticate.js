@@ -15,18 +15,13 @@ export async function injectAnonymousOrUser(context, next) {
     return await next();
   }
 
-  try {
-    const sessionObject = await session.findOneValidByToken(sessionToken);
-    const userObject = await user.findOneById(sessionObject.userId);
+  const sessionObject = await session.findOneValidByToken(sessionToken);
+  const userObject = await user.findOneById(sessionObject.user_id);
 
-    context.set("user", {
-      ...userObject,
-      isAnonymous: false,
-    });
-  } catch (error) {
-    console.log(error);
-    context.set("user", ANONYMOUS_USER);
-  }
+  context.set("user", {
+    ...userObject,
+    isAnonymous: false,
+  });
 
   await next();
 }
