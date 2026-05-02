@@ -1,7 +1,7 @@
 import database from "#infra/database.js";
 
 async function insert(username, email, hashedPassword, features) {
-  const result = await database.query({
+  const results = await database.query({
     text: `
         INSERT INTO
           users (username, email, password, features)
@@ -13,11 +13,11 @@ async function insert(username, email, hashedPassword, features) {
     values: [username, email, hashedPassword, features],
   });
 
-  return result.rows[0];
+  return results.rows[0];
 }
 
 async function update(id, { username, email, hashedPassword }) {
-  const result = await database.query({
+  const results = await database.query({
     text: `
         UPDATE
           users
@@ -34,11 +34,11 @@ async function update(id, { username, email, hashedPassword }) {
     values: [username, email, hashedPassword, id],
   });
 
-  return result.rows[0];
+  return results.rows[0];
 }
 
 async function findByEmail(email) {
-  const result = await database.query({
+  const results = await database.query({
     text: `
         SELECT
           *
@@ -52,7 +52,7 @@ async function findByEmail(email) {
     values: [email],
   });
 
-  return result.rows[0] || null;
+  return results.rows[0] || null;
 }
 
 async function findByUsername(username) {
@@ -74,25 +74,24 @@ async function findByUsername(username) {
 }
 
 async function findById(id) {
-  const result = await database.query({
+  const results = await database.query({
     text: `
         SELECT
           *
         FROM
           users
         WHERE
-          id = $1
+         id = $1
         LIMIT
           1
         ;`,
     values: [id],
   });
-
-  return result.rows[0] || null;
+  return results.rows[0] || null;
 }
 
 async function existsByEmail(email) {
-  const result = await database.query({
+  const results = await database.query({
     text: `
         SELECT
           1
@@ -104,11 +103,11 @@ async function existsByEmail(email) {
     values: [email],
   });
 
-  return result.rowCount > 0;
+  return results.rowCount > 0;
 }
 
 async function existsByUsername(username) {
-  const result = await database.query({
+  const results = await database.query({
     text: `
         SELECT
           1
@@ -120,7 +119,7 @@ async function existsByUsername(username) {
     values: [username],
   });
 
-  return result.rowCount > 0;
+  return results.rowCount > 0;
 }
 
 async function updateFeatures(userId, features) {
