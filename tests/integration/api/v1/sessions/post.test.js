@@ -113,9 +113,6 @@ describe("POST /api/v1/sessions", () => {
         },
       );
 
-      console.log(response);
-      console.log(body);
-
       expect(response.status).toBe(201);
 
       expect(body).toEqual({

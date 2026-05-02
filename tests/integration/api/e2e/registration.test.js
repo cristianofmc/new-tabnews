@@ -2,6 +2,7 @@ import orchestrator from "#tests/orchestrator.js";
 import config from "#infra/config.js";
 import activation from "#models/activation.js";
 import user from "#models/user.js";
+import session from "#models/session.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -13,6 +14,7 @@ beforeAll(async () => {
 describe("E2E registration happy path", () => {
   let userResponseBody;
   let token;
+  let userSession;
   test("Create user account", async () => {
     const { response, body } = await orchestrator.request("/api/v1/users", {
       method: "POST",
@@ -85,7 +87,7 @@ describe("E2E registration happy path", () => {
     expect(Date.parse(body.used_at)).not.toBeNaN();
 
     const activatedUser = await user.findOneByUsername("new_jimmy_five");
-    expect(activatedUser.features).toEqual(["create:session"]);
+    expect(activatedUser.features).toEqual(["create:session", "read:session"]);
   });
 
   test("Sign in", async () => {
@@ -100,9 +102,34 @@ describe("E2E registration happy path", () => {
       }),
     });
 
+    userSession = body;
     expect(response.status).toBe(201);
     expect(body.user_id).toBe(userResponseBody.id);
   });
 
-  test("Get user information", async () => {});
+  test("Get user information", async () => {
+    const { response, body } = await orchestrator.request(`/api/v1/user`, {
+      headers: {
+        Cookie: `${session.COOKIE_NAME}=${userSession.token}`,
+      },
+    });
+
+    expect(response.status).toBe(200);
+
+    const cacheControl = response.headers.get("Cache-Control");
+    expect(cacheControl).toBe("no-store, no-cache, max-age=0, must-revalidate");
+
+    expect(body).toEqual({
+      id: userResponseBody.id,
+      username: userResponseBody.username,
+      email: userResponseBody.email,
+      password: userResponseBody.password,
+      features: ["create:session", "read:session"],
+      created_at: userResponseBody.created_at,
+      updated_at: body.updated_at,
+    });
+
+    expect(Date.parse(body.created_at)).not.toBe(NaN);
+    expect(Date.parse(body.updated_at)).not.toBe(NaN);
+  });
 });
