@@ -2,6 +2,7 @@ import { handle } from "hono/vercel";
 import { createEndpoint } from "#infra/endpoint.js";
 import user from "#models/user.js";
 import { requireSchema } from "#infra/middlewares/validate.js";
+import { canRequest } from "#infra/middlewares/authorize.js";
 
 const endpoint = createEndpoint();
 
@@ -15,6 +16,7 @@ endpoint.get("/api/v1/users/:username", getHandler);
 endpoint.patch(
   "/api/v1/users/:username",
   requireSchema(updateSchema),
+  canRequest("update:user"),
   patchHandler,
 );
 

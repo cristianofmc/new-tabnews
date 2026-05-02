@@ -87,7 +87,11 @@ describe("E2E registration happy path", () => {
     expect(Date.parse(body.used_at)).not.toBeNaN();
 
     const activatedUser = await user.findOneByUsername("new_jimmy_five");
-    expect(activatedUser.features).toEqual(["create:session", "read:session"]);
+    expect(activatedUser.features).toEqual([
+      "create:session",
+      "read:session",
+      "update:user",
+    ]);
   });
 
   test("Sign in", async () => {
@@ -124,7 +128,7 @@ describe("E2E registration happy path", () => {
       username: userResponseBody.username,
       email: userResponseBody.email,
       password: userResponseBody.password,
-      features: ["create:session", "read:session"],
+      features: ["create:session", "read:session", "update:user"],
       created_at: userResponseBody.created_at,
       updated_at: body.updated_at,
     });
