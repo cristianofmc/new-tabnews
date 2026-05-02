@@ -4,7 +4,8 @@ import activation from "#models/activation.js";
 import { requireSchema } from "#infra/middlewares/validate.js";
 import { canRequest } from "#infra/middlewares/authorize.js";
 
-const { markTokenAsUsed, activateUserByUserId } = activation;
+const { markTokenAsUsed, activateUserByUserId, findOneValidTokenById } =
+  activation;
 
 const endpoint = createEndpoint();
 
@@ -17,11 +18,10 @@ endpoint.patch(
 
 async function patchHandler(context) {
   const activationTokenId = context.req.param("token_id");
-
+  console.log("activationTokenId", activationTokenId);
+  const userToActivate = await findOneValidTokenById(activationTokenId);
+  await activateUserByUserId(userToActivate.user_id);
   const usedActivationToken = await markTokenAsUsed(activationTokenId);
-  if (usedActivationToken) {
-    await activateUserByUserId(usedActivationToken.user_id);
-  }
 
   return context.json(usedActivationToken, 200);
 }

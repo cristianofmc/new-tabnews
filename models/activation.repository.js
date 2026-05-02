@@ -13,7 +13,6 @@ async function insert(userId, expiresAt) {
         ;`,
     values: [userId, expiresAt],
   });
-
   return results.rows[0];
 }
 

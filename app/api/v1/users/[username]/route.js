@@ -29,13 +29,6 @@ async function patchHandler(context) {
   const username = context.req.param("username");
   const updateData = context.get("validatedBody");
 
-  if (!username) {
-    console.log("username", username);
-    console.log("context", context.req);
-  }
-
-  console.log(updateData);
-
   const updatedUser = await user.updateByUsername(username, updateData);
 
   return context.json(updatedUser, 200);

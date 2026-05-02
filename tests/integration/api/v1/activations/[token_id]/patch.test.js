@@ -1,6 +1,8 @@
 import orchestrator from "#tests/orchestrator.js";
 import { vi } from "vitest";
 import activation from "#models/activation.js";
+import { version as uuidVersion } from "uuid";
+import session from "#models/session.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -10,9 +12,9 @@ beforeAll(async () => {
 });
 
 describe("PATCH /api/v1/activations/:token_id", () => {
-  let createdUser;
-  let activationToken;
   describe("Anonymous user", () => {
+    let createdUser;
+    let activationToken;
     test("Should create a user and fail to activate when sending an invalid body", async () => {
       const { response: userResponse, body: userBody } =
         await orchestrator.request("/api/v1/users", {
@@ -66,9 +68,9 @@ describe("PATCH /api/v1/activations/:token_id", () => {
       expect(response.status).toBe(404);
       expect(body).toEqual({
         name: "NotFoundError",
-        action: "Please create a new account.",
         message:
           "The activation token provided was not found in the system or has expired.",
+        action: "Please create a new account.",
         status_code: 404,
       });
     });
@@ -118,6 +120,7 @@ describe("PATCH /api/v1/activations/:token_id", () => {
         used_at: body.used_at,
       });
 
+      expect(uuidVersion(body.id)).toBe(4);
       expect(Date.parse(body.expires_at)).not.toBeNaN();
       expect(Date.parse(body.created_at)).not.toBeNaN();
       expect(Date.parse(body.updated_at)).not.toBeNaN();
@@ -149,10 +152,58 @@ describe("PATCH /api/v1/activations/:token_id", () => {
       expect(response.status).toBe(404);
       expect(body).toEqual({
         name: "NotFoundError",
-        action: "Please create a new account.",
         message:
           "The activation token provided was not found in the system or has expired.",
+        action: "Please create a new account.",
         status_code: 404,
+      });
+    });
+
+    test("Should fail to activate again", async () => {
+      const createdActivatedUser = await orchestrator.createActivatedUser();
+      const newActivationToken = await activation.create(
+        createdActivatedUser.id,
+      );
+      const { response, body } = await orchestrator.request(
+        `/api/v1/activations/${newActivationToken.id}`,
+        { method: "PATCH" },
+      );
+
+      expect(response.status).toBe(403);
+      expect(body).toEqual({
+        name: "ForbiddenError",
+        message: "You do not have permission to activate account.",
+        action: "Please contact support if you believe this is an error.",
+        status_code: 403,
+      });
+    });
+  });
+
+  describe("Default user", () => {
+    test("Should fail to activate already logged in user", async () => {
+      const user1 = await orchestrator.createActivatedUser();
+      const user1SessionObject = await orchestrator.createSession(user1.id);
+
+      const user2 = await orchestrator.createUser();
+      const user2ActivationToken = await activation.create(user2.id);
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/activations/${user2ActivationToken.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Cookie: `${session.COOKIE_NAME}=${user1SessionObject.token}`,
+          },
+        },
+      );
+
+      expect(response.status).toBe(403);
+      expect(body).toEqual({
+        name: "ForbiddenError",
+        message: "You do not have permission to perform this action.",
+        action:
+          "Please check if your user has the 'read:activation_token' feature.",
+        status_code: 403,
       });
     });
   });

@@ -2,6 +2,8 @@ import email from "#infra/email.js";
 import activationRepository from "#models/activation.repository.js";
 import config from "#infra/config.js";
 import user from "#models/user.js";
+import authorization from "./authorization";
+import { ForbiddenError } from "#infra/errors.js";
 
 const EXPIRATION_IN_MILLISECONDS = 60 * 15 * 1000; // 15 minutes
 
@@ -28,6 +30,13 @@ async function markTokenAsUsed(activationTokenId) {
 }
 
 async function activateUserByUserId(userId) {
+  const userToActivate = await user.findOneById(userId);
+  if (!authorization.can(userToActivate, "read:activation_token")) {
+    throw new ForbiddenError({
+      message: "You do not have permission to activate account.",
+      action: "Please contact support if you believe this is an error.",
+    });
+  }
   const activatedUser = await user.setFeatures(userId, [
     "create:session",
     "read:session",
