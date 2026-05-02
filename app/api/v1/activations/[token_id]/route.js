@@ -18,7 +18,6 @@ endpoint.patch(
 
 async function patchHandler(context) {
   const activationTokenId = context.req.param("token_id");
-  console.log("activationTokenId", activationTokenId);
   const userToActivate = await findOneValidTokenById(activationTokenId);
   await activateUserByUserId(userToActivate.user_id);
   const usedActivationToken = await markTokenAsUsed(activationTokenId);
