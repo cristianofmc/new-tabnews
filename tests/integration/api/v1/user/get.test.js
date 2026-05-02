@@ -11,9 +11,24 @@ beforeAll(async () => {
 });
 
 describe("GET /api/v1/user", () => {
+  describe("Anonymous user", () => {
+    test("Should not receive a valid session without providing a cookie", async () => {
+      const { response, body } = await orchestrator.request(`/api/v1/user`);
+
+      expect(response.status).toBe(403);
+
+      expect(body).toEqual({
+        name: "ForbiddenError",
+        message: "You do not have permission to perform this action.",
+        action: "Please check if your user has the 'read:session' feature.",
+        status_code: 403,
+      });
+    });
+  });
+
   describe("Default user", () => {
     test("Should receive valid session", async () => {
-      const created_user = await orchestrator.createUser();
+      const created_user = await orchestrator.createActivatedUser();
       const sessionObject = await orchestrator.createSession(created_user.id);
 
       const { response, body } = await orchestrator.request(`/api/v1/user`, {
@@ -34,6 +49,7 @@ describe("GET /api/v1/user", () => {
         username: created_user.username,
         email: created_user.email,
         password: created_user.password,
+        features: ["create:session", "read:session"],
         created_at: created_user.created_at.toISOString(),
         updated_at: created_user.updated_at.toISOString(),
       });
@@ -71,7 +87,7 @@ describe("GET /api/v1/user", () => {
       vi.useFakeTimers({
         now: new Date(Date.now() - expirationMinusOneMinute),
       });
-      const created_user = await orchestrator.createUser();
+      const created_user = await orchestrator.createActivatedUser();
       const sessionObject = await orchestrator.createSession(created_user.id);
 
       vi.useRealTimers();
@@ -89,6 +105,7 @@ describe("GET /api/v1/user", () => {
         username: created_user.username,
         email: created_user.email,
         password: created_user.password,
+        features: ["create:session", "read:session"],
         created_at: created_user.created_at.toISOString(),
         updated_at: created_user.updated_at.toISOString(),
       });
@@ -154,19 +171,6 @@ describe("GET /api/v1/user", () => {
           Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
         },
       });
-      expect(response.status).toBe(401);
-
-      expect(body).toEqual({
-        name: "UnauthorizedError",
-        message: "The user does not have an active session.",
-        action: "Please check if this user is logged in and try again.",
-        status_code: 401,
-      });
-    });
-
-    test("Should not receive a valid session without providing a cookie", async () => {
-      const { response, body } = await orchestrator.request(`/api/v1/user`);
-
       expect(response.status).toBe(401);
 
       expect(body).toEqual({

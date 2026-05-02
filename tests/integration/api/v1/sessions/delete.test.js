@@ -118,7 +118,6 @@ describe("DELETE /api/v1/sessions", () => {
           },
         });
 
-      console.log(doubleCheckResponse);
       expect(doubleCheckResponse.status).toBe(401);
       expect(doubleCheckBody).toEqual({
         name: "UnauthorizedError",

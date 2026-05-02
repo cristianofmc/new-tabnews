@@ -30,9 +30,14 @@ function checkUnrecognizedFields(providedFields, allowedFields) {
   );
 
   if (invalidFields.length > 0) {
+    const actionMessage =
+      allowedFields.length > 0
+        ? `Please remove these fields. The only allowed fields are: ${allowedFields.join(", ")}.`
+        : "Please remove these fields. This endpoint does not accept any data in the request body.";
+
     throw new ValidationError({
       message: `Unrecognized or not allowed fields provided: '${invalidFields.join(", ")}'.`,
-      action: `Please remove these fields. The only allowed fields are: ${allowedFields.join(", ")}.`,
+      action: actionMessage,
     });
   }
 }
@@ -105,7 +110,12 @@ function validate(payload, schema) {
     .filter((entry) => entry[1].required)
     .map((entry) => entry[0]);
 
-  checkEmptyPayload(providedFields, allowedFields);
+  const expectsEmptyBody = allowedFields.length === 0;
+
+  if (!expectsEmptyBody) {
+    checkEmptyPayload(providedFields, allowedFields);
+  }
+
   checkMissingFields(providedFields, requiredFields);
   checkUnrecognizedFields(providedFields, allowedFields);
 

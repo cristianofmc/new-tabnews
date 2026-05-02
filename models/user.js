@@ -1,6 +1,8 @@
-import database from "#infra/database.js";
 import { ValidationError, NotFoundError } from "#infra/errors.js";
 import password from "#models/password.js";
+import userRepository from "#models/user.repository.js";
+
+const default_features = ["read:activation_token"];
 
 async function create(updateData) {
   const email = updateData.email.toLowerCase();
@@ -10,20 +12,9 @@ async function create(updateData) {
   await validateUniqueUsername(username);
 
   const hashedPassword = await password.hash(updateData.password);
+  const features = default_features;
 
-  const result = await database.query({
-    text: `
-        INSERT INTO
-          users (username, email, password)
-        VALUES
-          (LOWER($1), LOWER($2), $3)
-        RETURNING
-          *
-        ;`,
-    values: [username, email, hashedPassword],
-  });
-
-  return result.rows[0];
+  return await userRepository.insert(username, email, hashedPassword, features);
 }
 
 async function updateByUsername(currentUsername, updateData) {
@@ -58,113 +49,56 @@ async function updateByUsername(currentUsername, updateData) {
     hashedPassword = await password.hash(updateData.password);
   }
 
-  const result = await database.query({
-    text: `
-        UPDATE
-          users
-        SET
-          username = COALESCE(LOWER($1), username),
-          email = COALESCE(LOWER($2), email),
-          password = COALESCE($3, password),
-          updated_at = timezone('utc', now())
-        WHERE
-          id = $4
-        RETURNING
-          *
-        ;`,
-    values: [newUsername, newEmail, hashedPassword, currentUser.id],
+  return await userRepository.update(currentUser.id, {
+    username: newUsername || null,
+    email: newEmail || null,
+    hashedPassword: hashedPassword || null,
   });
-
-  return result.rows[0];
 }
 
 async function findOneByEmail(email) {
-  const result = await database.query({
-    text: `
-        SELECT
-          *
-        FROM
-          users
-        WHERE
-          LOWER(email) = LOWER($1)
-        LIMIT
-          1
-        ;`,
-    values: [email],
-  });
+  const user = await userRepository.findByEmail(email);
 
-  if (result.rowCount === 0) {
+  if (!user) {
     throw new NotFoundError({
       message: "The email provided was not found.",
       action: "Please check that the email was entered correctly.",
     });
   }
-  return result.rows[0];
+
+  return user;
 }
 
 async function findOneByUsername(username) {
-  const result = await database.query({
-    text: `
-        SELECT
-          *
-        FROM
-          users
-        WHERE
-          LOWER(username) = LOWER($1)
-        LIMIT
-          1
-        ;`,
-    values: [username],
-  });
+  const user = await userRepository.findByUsername(username);
 
-  if (result.rowCount === 0) {
+  if (!user) {
     throw new NotFoundError({
       message: "The username provided was not found.",
       action: "Please check that the username was entered correctly.",
     });
   }
 
-  return result.rows[0];
+  return user;
 }
 
 async function findOneById(id) {
-  const result = await database.query({
-    text: `
-        SELECT
-          *
-        FROM
-          users
-        WHERE
-          id = $1
-        LIMIT
-          1
-        ;`,
-    values: [id],
-  });
+  const user = await userRepository.findById(id);
 
-  if (result.rowCount === 0) {
+  if (!user) {
     throw new NotFoundError({
       message: "The id provided was not found.",
       action: "Please check that the id was entered correctly.",
     });
   }
-  return result.rows[0];
+
+  return user;
 }
 
 async function validateUniqueEmail(email) {
-  const result = await database.query({
-    text: `
-        SELECT
-          email
-        FROM
-          users
-        WHERE
-          LOWER(email) = LOWER($1)
-        ;`,
-    values: [email],
-  });
+  const exists = await userRepository.existsByEmail(email);
 
-  if (result.rowCount > 0) {
+  if (exists) {
     throw new ValidationError({
       message: "The email address provided is already registered.",
       action: "Please try again with a different email.",
@@ -173,24 +107,19 @@ async function validateUniqueEmail(email) {
 }
 
 async function validateUniqueUsername(username) {
-  const result = await database.query({
-    text: `
-        SELECT
-          username
-        FROM
-          users
-        WHERE
-          LOWER(username) = LOWER($1)
-        ;`,
-    values: [username],
-  });
+  const exists = await userRepository.existsByUsername(username);
 
-  if (result.rowCount > 0) {
+  if (exists) {
     throw new ValidationError({
       message: "The username provided is already registered.",
       action: "Please try again with a different username.",
     });
   }
+}
+
+async function setFeatures(userId, features) {
+  const updatedUser = await userRepository.updateFeatures(userId, features);
+  return updatedUser;
 }
 
 const user = {
@@ -199,5 +128,7 @@ const user = {
   findOneByEmail,
   findOneById,
   updateByUsername,
+  setFeatures,
 };
+
 export default user;

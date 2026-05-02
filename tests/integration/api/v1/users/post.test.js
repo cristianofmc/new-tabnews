@@ -2,6 +2,7 @@ import orchestrator from "#tests/orchestrator.js";
 import { version as uuidVersion } from "uuid";
 import user from "#models/user.js";
 import password from "#models/password.js";
+import session from "#models/session.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -31,6 +32,7 @@ describe("POST /api/v1/users", () => {
         username: "jimmyfive",
         email: "jimmyfive@host.testemail",
         password: body.password,
+        features: ["read:activation_token"],
         created_at: body.created_at,
         updated_at: body.updated_at,
       });
@@ -126,6 +128,34 @@ describe("POST /api/v1/users", () => {
         message: "The username provided is already registered.",
         action: "Please try again with a different username.",
         status_code: 400,
+      });
+    });
+  });
+
+  describe("Default user", () => {
+    test("Should fail to create a new account with already logged in user", async () => {
+      const user1 = await orchestrator.createActivatedUser();
+      const user1SessionObject = await orchestrator.createSession(user1.id);
+
+      const { response, body } = await orchestrator.request("/api/v1/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `${session.COOKIE_NAME}=${user1SessionObject.token}`,
+        },
+        body: JSON.stringify({
+          username: "jimmyfive_new_user",
+          email: "jimmyfive_new_user@host.testemail",
+          password: "Test@123",
+        }),
+      });
+
+      expect(response.status).toBe(403);
+      expect(body).toEqual({
+        name: "ForbiddenError",
+        message: "You do not have permission to perform this action.",
+        action: "Please check if your user has the 'create:user' feature.",
+        status_code: 403,
       });
     });
   });
