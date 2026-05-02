@@ -16,6 +16,7 @@ export async function getNewClient() {
 }
 
 export async function query(queryObject) {
+  undefinedFilter(queryObject);
   let client;
   try {
     client = await getNewClient();
@@ -28,6 +29,21 @@ export async function query(queryObject) {
     throw ServiceErrorObject;
   } finally {
     await client?.end();
+  }
+}
+
+function undefinedFilter(queryObject) {
+  if (queryObject.values && queryObject.values.includes(undefined)) {
+    const index = queryObject.values.indexOf(undefined);
+    const querySnippet = queryObject.text
+      .replace(/\s+/g, " ")
+      .trim()
+      .substring(0, 100);
+
+    throw new ServiceError({
+      message: `Database Guard: 'undefined' value detected at position $${index + 1} in the query. Received values: [${queryObject.values}]. Query: "${querySnippet}..."`,
+      action: "Please check the values and variables sent to the query.",
+    });
   }
 }
 
