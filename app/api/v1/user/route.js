@@ -4,9 +4,12 @@ import user from "#models/user.js";
 import { getCookie } from "hono/cookie";
 import session from "#models/session.js";
 import controller from "#infra/controller.js";
+import { canRequest } from "#infra/middlewares/authorize.js";
+import { requireSchema } from "#infra/middlewares/validate.js";
+
 const endpoint = createEndpoint();
 
-endpoint.get("*", getHandler);
+endpoint.get("*", requireSchema({}), canRequest("read:session"), getHandler);
 
 async function getHandler(context) {
   const sessionToken = getCookie(context, session.COOKIE_NAME);
@@ -19,7 +22,8 @@ async function getHandler(context) {
     "Cache-Control",
     "no-store, no-cache, max-age=0, must-revalidate",
   );
-  const userFound = await user.findOneById(sessionObject.user_id);
+
+  const userFound = await user.findOneById(renewedSessionObject.user_id);
   return context.json(userFound, 200);
 }
 

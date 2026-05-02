@@ -1,12 +1,22 @@
 import { handle } from "hono/vercel";
 import { createEndpoint } from "#infra/endpoint.js";
 import user from "#models/user.js";
-import validator from "#infra/validators.js";
+import { requireSchema } from "#infra/middlewares/validate.js";
 
 const endpoint = createEndpoint();
 
+const updateSchema = {
+  username: { type: "username", required: false },
+  email: { type: "email", required: false },
+  password: { type: "password", required: false },
+};
+
 endpoint.get("/api/v1/users/:username", getHandler);
-endpoint.patch("/api/v1/users/:username", patchHandler);
+endpoint.patch(
+  "/api/v1/users/:username",
+  requireSchema(updateSchema),
+  patchHandler,
+);
 
 async function getHandler(context) {
   const username = context.req.param("username");
@@ -17,15 +27,14 @@ async function getHandler(context) {
 
 async function patchHandler(context) {
   const username = context.req.param("username");
-  const updateData = await context.req.json();
+  const updateData = context.get("validatedBody");
 
-  const updateSchema = {
-    username: { type: "username", required: false },
-    email: { type: "email", required: false },
-    password: { type: "password", required: false },
-  };
+  if (!username) {
+    console.log("username", username);
+    console.log("context", context.req);
+  }
 
-  validator.validate(updateData, updateSchema);
+  console.log(updateData);
 
   const updatedUser = await user.updateByUsername(username, updateData);
 
