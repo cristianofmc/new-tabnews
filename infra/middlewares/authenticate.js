@@ -20,7 +20,6 @@ export async function injectAnonymousOrUser(context, next) {
 
   context.set("user", {
     ...userObject,
-    isAnonymous: false,
   });
 
   await next();

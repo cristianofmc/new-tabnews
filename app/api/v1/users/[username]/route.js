@@ -3,6 +3,8 @@ import { createEndpoint } from "#infra/endpoint.js";
 import user from "#models/user.js";
 import { requireSchema } from "#infra/middlewares/validate.js";
 import { canRequest } from "#infra/middlewares/authorize.js";
+import authorization from "#models/authorization.js";
+import { ForbiddenError } from "#infra/errors.js";
 
 const endpoint = createEndpoint();
 
@@ -30,6 +32,17 @@ async function getHandler(context) {
 async function patchHandler(context) {
   const username = context.req.param("username");
   const updateData = context.get("validatedBody");
+
+  const userTryingToPatch = context.get("user");
+  const targetUser = await user.findOneByUsername(username);
+
+  if (!authorization.can(userTryingToPatch, "update:user", targetUser)) {
+    throw new ForbiddenError({
+      message: "You do not have permission to update another user.",
+      action:
+        "Please verify that you have the required feature to update another user.",
+    });
+  }
 
   const updatedUser = await user.updateByUsername(username, updateData);
 

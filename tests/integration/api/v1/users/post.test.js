@@ -154,7 +154,7 @@ describe("POST /api/v1/users", () => {
       expect(body).toEqual({
         name: "ForbiddenError",
         message: "You do not have permission to perform this action.",
-        action: "Please check if your user has the 'create:user' feature.",
+        action: "Please verify that your user has the 'create:user' feature.",
         status_code: 403,
       });
     });

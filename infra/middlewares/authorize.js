@@ -11,7 +11,7 @@ export function canRequest(feature) {
 
     throw new ForbiddenError({
       message: "You do not have permission to perform this action.",
-      action: `Please check if your user has the '${feature}' feature.`,
+      action: `Please verify that your user has the '${feature}' feature.`,
     });
   };
 }

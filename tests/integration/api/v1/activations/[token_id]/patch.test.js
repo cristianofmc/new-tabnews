@@ -202,7 +202,7 @@ describe("PATCH /api/v1/activations/:token_id", () => {
         name: "ForbiddenError",
         message: "You do not have permission to perform this action.",
         action:
-          "Please check if your user has the 'read:activation_token' feature.",
+          "Please verify that your user has the 'read:activation_token' feature.",
         status_code: 403,
       });
     });

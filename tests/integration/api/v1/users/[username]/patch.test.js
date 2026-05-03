@@ -31,7 +31,7 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(body).toEqual({
         name: "ForbiddenError",
         message: "You do not have permission to perform this action.",
-        action: "Please check if your user has the 'update:user' feature.",
+        action: "Please verify that your user has the 'update:user' feature.",
         status_code: 403,
       });
     });
@@ -95,7 +95,7 @@ describe("PATCH /api/v1/users/[username]", () => {
       });
     });
 
-    test("should return 400 when sending a malformed JSON", async () => {
+    test("should return 400 when sending malformed JSON", async () => {
       const { response, body } = await orchestrator.request(
         "/api/v1/users/AnyUser",
         {
@@ -109,7 +109,7 @@ describe("PATCH /api/v1/users/[username]", () => {
 
       expect(body).toEqual({
         name: "ValidationError",
-        message: "The request body does not contain a valid JSON.",
+        message: "The request body does not contain valid JSON.",
         action:
           "Please check the syntax of the submitted JSON or ensure the request body is not empty.",
         status_code: 400,
@@ -218,6 +218,36 @@ describe("PATCH /api/v1/users/[username]", () => {
         message: "The username provided is already registered.",
         action: "Please try again with a different username.",
         status_code: 400,
+      });
+    });
+
+    test("should not update the username of another user", async () => {
+      const created_user = await orchestrator.createActivatedUser();
+      const sessionObject = await orchestrator.createSession(created_user.id);
+
+      const created_user2 = await orchestrator.createUser();
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/users/${created_user2.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: `${created_user2.username}_jimmy_five`,
+          }),
+        },
+      );
+
+      expect(response.status).toBe(403);
+      expect(body).toEqual({
+        name: "ForbiddenError",
+        message: "You do not have permission to update another user.",
+        action:
+          "Please verify that you have the required feature to update another user.",
+        status_code: 403,
       });
     });
 
