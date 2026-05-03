@@ -423,8 +423,6 @@ describe("PATCH /api/v1/users/[username]", () => {
       });
       const sessionObject = await orchestrator.createSession(created_user.id);
 
-      console.log(created_user);
-
       const { response, body } = await orchestrator.request(
         "/api/v1/users/OriginalJimmyFive",
         {
@@ -474,6 +472,52 @@ describe("PATCH /api/v1/users/[username]", () => {
       );
 
       expect(incorrectPasswordMatch).toBe(false);
+    });
+  });
+
+  describe("Privileged user", () => {
+    test("should update the username of another user", async () => {
+      const privilegedUser = await orchestrator.createActivatedUser();
+
+      await orchestrator.addFeaturesToUser(privilegedUser, [
+        "update:user:others",
+      ]);
+
+      const sessionObject = await orchestrator.createSession(privilegedUser.id);
+
+      const defaultUser = await orchestrator.createUser();
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/users/${defaultUser.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: `${defaultUser.username}_jimmy_five`,
+          }),
+        },
+      );
+
+      expect(response.status).toBe(200);
+      expect(body).toEqual({
+        id: defaultUser.id,
+        username: `${defaultUser.username}_jimmy_five`,
+        email: defaultUser.email,
+        password: body.password,
+        features: ["read:activation_token"],
+        created_at: defaultUser.created_at.toISOString(),
+        updated_at: body.updated_at,
+      });
+
+      expect(uuidVersion(body.id)).toBe(4);
+      expect(Date.parse(body.created_at)).not.toBe(NaN);
+
+      expect(new Date(body.updated_at).getTime()).toBeGreaterThan(
+        new Date(body.created_at).getTime(),
+      );
     });
   });
 });
