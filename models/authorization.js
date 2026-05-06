@@ -41,7 +41,7 @@ function filterOutput(user, feature, resource) {
   }
 
   if (feature === "read:session") {
-    if (user.id === resource.id) {
+    if (user.id === resource.user_id) {
       return {
         id: resource.id,
         token: resource.token,
@@ -54,16 +54,14 @@ function filterOutput(user, feature, resource) {
   }
 
   if (feature === "read:activation_token") {
-    if (user.id === resource.id) {
-      return {
-        id: resource.id,
-        user_id: resource.user_id,
-        created_at: resource.created_at,
-        updated_at: resource.updated_at,
-        expires_at: resource.expires_at,
-        used_at: resource.used_at,
-      };
-    }
+    return {
+      id: resource.id,
+      user_id: resource.user_id,
+      created_at: resource.created_at,
+      updated_at: resource.updated_at,
+      expires_at: resource.expires_at,
+      used_at: resource.used_at,
+    };
   }
 }
 
