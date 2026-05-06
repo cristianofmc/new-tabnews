@@ -23,10 +23,16 @@ endpoint.patch(
 );
 
 async function getHandler(context) {
+  const userTryingToGet = context.get("user");
   const username = context.req.param("username");
   const userFound = await user.findOneByUsername(username);
 
-  return context.json(userFound, 200);
+  const secureOutputValues = authorization.filterOutput(
+    userTryingToGet,
+    "read:user",
+    userFound,
+  );
+  return context.json(secureOutputValues, 200);
 }
 
 async function patchHandler(context) {
@@ -45,8 +51,13 @@ async function patchHandler(context) {
   }
 
   const updatedUser = await user.updateByUsername(username, updateData);
+  const secureOutputValues = authorization.filterOutput(
+    userTryingToPatch,
+    "read:user",
+    updatedUser,
+  );
 
-  return context.json(updatedUser, 200);
+  return context.json(secureOutputValues, 200);
 }
 
 const handler = handle(endpoint);

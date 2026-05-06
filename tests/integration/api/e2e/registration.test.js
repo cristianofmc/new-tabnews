@@ -34,8 +34,6 @@ describe("E2E registration happy path", () => {
     expect(body).toEqual({
       id: body.id,
       username: "new_jimmy_five",
-      email: "newjimmyfive@host.testemail",
-      password: body.password,
       features: ["read:activation_token"],
       created_at: body.created_at,
       updated_at: body.updated_at,
@@ -126,8 +124,8 @@ describe("E2E registration happy path", () => {
     expect(body).toEqual({
       id: userResponseBody.id,
       username: userResponseBody.username,
-      email: userResponseBody.email,
-      password: userResponseBody.password,
+      email: body.email,
+      password: body.password,
       features: ["create:session", "read:session", "update:user"],
       created_at: userResponseBody.created_at,
       updated_at: body.updated_at,

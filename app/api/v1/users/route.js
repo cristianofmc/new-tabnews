@@ -1,10 +1,10 @@
 import { handle } from "hono/vercel";
 import { createEndpoint } from "#infra/endpoint.js";
 import user from "#models/user.js";
-import validator from "#infra/validators.js";
 import activation from "#models/activation.js";
 import { requireSchema } from "#infra/middlewares/validate.js";
 import { canRequest } from "#infra/middlewares/authorize.js";
+import authorization from "#models/authorization.js";
 
 const endpoint = createEndpoint();
 
@@ -22,16 +22,18 @@ endpoint.post(
 );
 
 async function postHandler(context) {
-  const userInputValues = await context.req.json();
-
-  validator.validate(userInputValues, userCreationSchema);
-
-  const newUser = await user.create(userInputValues);
+  const userInputData = await context.get("validatedBody");
+  const newUser = await user.create(userInputData);
 
   const activationToken = await activation.create(newUser.id);
   await activation.sendEmailToUser(newUser, activationToken);
 
-  return context.json(newUser, 201);
+  const secureOutputValues = authorization.filterOutput(
+    userInputData,
+    "read:user",
+    newUser,
+  );
+  return context.json(secureOutputValues, 201);
 }
 
 const handler = handle(endpoint);

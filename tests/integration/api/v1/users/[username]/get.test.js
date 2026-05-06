@@ -21,8 +21,6 @@ describe("GET /api/v1/users/[username]", () => {
       expect(body).toEqual({
         id: body.id,
         username: created_user.username,
-        email: created_user.email,
-        password: body.password,
         features: ["read:activation_token"],
         created_at: body.created_at,
         updated_at: body.updated_at,
@@ -34,7 +32,7 @@ describe("GET /api/v1/users/[username]", () => {
     });
 
     test("Username should mismatch with case", async () => {
-      const created_user = await orchestrator.createUser({
+      await orchestrator.createUser({
         username: "CaseJimmyFiveCase",
       });
 
@@ -47,8 +45,6 @@ describe("GET /api/v1/users/[username]", () => {
       expect(body).toEqual({
         id: body.id,
         username: "casejimmyfivecase",
-        email: created_user.email,
-        password: body.password,
         features: ["read:activation_token"],
         created_at: body.created_at,
         updated_at: body.updated_at,

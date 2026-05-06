@@ -6,12 +6,14 @@ import session from "#models/session.js";
 import controller from "#infra/controller.js";
 import { canRequest } from "#infra/middlewares/authorize.js";
 import { requireSchema } from "#infra/middlewares/validate.js";
+import authorization from "#models/authorization.js";
 
 const endpoint = createEndpoint();
 
 endpoint.get("*", requireSchema({}), canRequest("read:session"), getHandler);
 
 async function getHandler(context) {
+  const userTryingToGet = await context.get("user");
   const sessionToken = getCookie(context, session.COOKIE_NAME);
 
   const sessionObject = await session.findOneValidByToken(sessionToken);
@@ -24,7 +26,14 @@ async function getHandler(context) {
   );
 
   const userFound = await user.findOneById(renewedSessionObject.user_id);
-  return context.json(userFound, 200);
+
+  const secureOutputValues = authorization.filterOutput(
+    userTryingToGet,
+    "read:user:self",
+    userFound,
+  );
+
+  return context.json(secureOutputValues, 200);
 }
 
 const handler = handle(endpoint);
