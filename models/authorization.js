@@ -63,9 +63,17 @@ function filterOutput(user, feature, resource) {
       used_at: resource.used_at,
     };
   }
-}
 
-("read:activation_token");
+  if (feature === "read:migration") {
+    return resource.map((migration) => {
+      return {
+        path: migration.path,
+        name: migration.name,
+        timestamp: migration.timestamp,
+      };
+    });
+  }
+}
 
 const authorization = { can, filterOutput };
 
