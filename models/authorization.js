@@ -73,6 +73,22 @@ function filterOutput(user, feature, resource) {
       };
     });
   }
+
+  if (feature === "read:status") {
+    const output = {
+      updated_at: resource.updated_at,
+      database: {
+        max_connections: resource.database.max_connections,
+        current_connections: resource.database.current_connections,
+      },
+    };
+
+    if (can(user, "read:status:all")) {
+      output.database.server_version = resource.database.server_version;
+      output.database.environment = resource.database.environment;
+    }
+    return output;
+  }
 }
 
 const authorization = { can, filterOutput };
