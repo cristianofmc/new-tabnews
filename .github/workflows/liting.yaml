@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version-file: "package.json"
       - name: Install dependencies
         run: npm ci
       - name: Run lint prettier
@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version-file: "package.json"
       - name: Install dependencies
         run: npm ci
       - name: Run lint eslint
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version-file: "package.json"
       - name: Install dependencies
         run: npm ci
       - name: Run spellcheck
@@ -51,7 +51,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version-file: "package.json"
       - name: Install dependencies
         run: npm ci
       - name: Run commitlint
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version-file: "package.json"
       - name: Install dependencies
         run: npm ci
       - name: Check for package-lock injection
@@ -77,7 +77,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version-file: "package.json"
       - name: Install dependencies
         run: npm ci
       - name: Check for exposed secrets
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version-file: "package.json"
       - name: Install dependencies
         run: npm ci
       - name: Check for high vulnerabilities

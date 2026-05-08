@@ -39,13 +39,13 @@
     "lint:security:sast": "podman run --rm -v \"${PWD}:/src\" docker.io/returntocorp/semgrep semgrep scan --config auto && podman rmi docker.io/returntocorp/semgrep",
     "lint:security:all": "npm run lint:security:lockfile && npm run lint:security:secrets && npm run lint:security:audit",
     "prepare": "husky",
-    "commit": "cz"
+    "commit": "czg"
   },
   "dependencies": {
     "argon2": "0.44.0",
     "async-retry": "1.3.3",
     "dotenv-expand": "12.0.3",
-    "hono": "4.12.14",
+    "hono": "4.12.18",
     "next": "16.2.4",
     "node-pg-migrate": "8.0.4",
     "nodemailer": "8.0.5",
@@ -67,10 +67,10 @@
     "@microsoft/eslint-plugin-sdl": "^1.1.0",
     "@secretlint/secretlint-rule-preset-recommend": "^11.4.1",
     "@vitejs/plugin-react": "^6.0.1",
-    "commitizen": "4.3.1",
     "concurrently": "9.2.1",
     "cspell": "^9.7.0",
-    "cz-conventional-changelog": "3.3.0",
+    "cz-git": "^1.13.0",
+    "czg": "^1.13.0",
     "dotenv": "^17.4.1",
     "eslint": "10.1.0",
     "eslint-config-next": "16.2.1",
@@ -86,6 +86,9 @@
     "typescript": "^5.9.3",
     "vitest": "^4.1.3"
   },
+  "engines": {
+    "node": "24"
+  },
   "overrides": {
     "@microsoft/eslint-plugin-sdl": {
       "eslint": "$eslint"
@@ -93,7 +96,7 @@
   },
   "config": {
     "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
+      "path": "node_modules/cz-git"
     }
   },
   "lint-staged": {
