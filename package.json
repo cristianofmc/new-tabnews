@@ -36,7 +36,7 @@
     "lint:security:lockfile": "lockfile-lint --path package-lock.json --allowed-hosts npm --validate-https",
     "lint:security:secrets": "secretlint \"**/*\"",
     "lint:security:audit": "npm audit --audit-level high --omit=dev",
-    "lint:security:sast": "podman run --rm -v \"${PWD}:/src\" docker.io/returntocorp/semgrep semgrep scan --config auto && podman rmi docker.io/returntocorp/semgrep",
+    "lint:security:sast": "podman run --rm -v \"${PWD}:/src\" semgrep/semgrep semgrep scan --config auto && podman rmi semgrep/semgrep",
     "lint:security:all": "npm run lint:security:lockfile && npm run lint:security:secrets && npm run lint:security:audit",
     "prepare": "husky",
     "commit": "czg"
