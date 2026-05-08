@@ -102,6 +102,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Run Semgrep Security Scan
-        uses: semgrep/action@v1
+        uses: semgrep/semgrep-action@v1
         with:
           config: auto
