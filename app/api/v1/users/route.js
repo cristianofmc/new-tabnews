@@ -22,6 +22,7 @@ endpoint.post(
 );
 
 async function postHandler(context) {
+  const userTryingToPost = await context.get("user");
   const userInputData = await context.get("validatedBody");
   const newUser = await user.create(userInputData);
 
@@ -29,7 +30,7 @@ async function postHandler(context) {
   await activation.sendEmailToUser(newUser, activationToken);
 
   const secureOutputValues = authorization.filterOutput(
-    userInputData,
+    userTryingToPost,
     "read:user",
     newUser,
   );
