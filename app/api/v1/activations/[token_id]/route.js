@@ -3,6 +3,7 @@ import { createEndpoint } from "#infra/endpoint.js";
 import activation from "#models/activation.js";
 import { requireSchema } from "#infra/middlewares/validate.js";
 import { canRequest } from "#infra/middlewares/authorize.js";
+import authorization from "#models/authorization.js";
 
 const { markTokenAsUsed, activateUserByUserId, findOneValidTokenById } =
   activation;
@@ -17,12 +18,18 @@ endpoint.patch(
 );
 
 async function patchHandler(context) {
+  const userTryingToPatch = context.get("user");
   const activationTokenId = context.req.param("token_id");
   const userToActivate = await findOneValidTokenById(activationTokenId);
   await activateUserByUserId(userToActivate.user_id);
   const usedActivationToken = await markTokenAsUsed(activationTokenId);
 
-  return context.json(usedActivationToken, 200);
+  const secureOutputValues = authorization.filterOutput(
+    userTryingToPatch,
+    "read:activation_token",
+    usedActivationToken,
+  );
+  return context.json(secureOutputValues, 200);
 }
 
 const handler = handle(endpoint);

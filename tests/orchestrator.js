@@ -98,6 +98,11 @@ async function createActivatedUser(userObject = {}) {
   return await activation.activateUserByUserId(userCreated.id);
 }
 
+async function addFeaturesToUser(userObject, features) {
+  const updatedUser = await user.addFeatures(userObject.id, features);
+  return updatedUser;
+}
+
 async function createSession(userId) {
   return await session.create(userId);
 }
@@ -136,6 +141,7 @@ const orchestrator = {
   request,
   createUser,
   createActivatedUser,
+  addFeaturesToUser,
   createSession,
   deleteAllEmails,
   getLastEmail,

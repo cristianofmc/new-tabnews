@@ -2,6 +2,7 @@ import orchestrator from "#tests/orchestrator.js";
 import { version as uuidVersion } from "uuid";
 import user from "#models/user.js";
 import password from "#models/password.js";
+import session from "#models/session.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -11,12 +12,44 @@ beforeAll(async () => {
 
 describe("PATCH /api/v1/users/[username]", () => {
   describe("Anonymous user", () => {
+    test("should not update the password when sent in the PATCH body", async () => {
+      const created_user = await orchestrator.createUser();
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/users/${created_user.username}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            password: "NewSecurePassword@456",
+          }),
+        },
+      );
+
+      expect(response.status).toBe(403);
+
+      expect(body).toEqual({
+        name: "ForbiddenError",
+        message: "You do not have permission to perform this action.",
+        action: "Please verify that your user has the 'update:user' feature.",
+        status_code: 403,
+      });
+    });
+  });
+
+  describe("Default user", () => {
     test("should return 404 when updating a non-existent user", async () => {
+      const createdUser = await orchestrator.createActivatedUser();
+      const sessionObject = await orchestrator.createSession(createdUser.id);
+
       const { response, body } = await orchestrator.request(
         "/api/v1/users/GhostJimmyFive",
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
           body: JSON.stringify({
             username: "WillNeverExist",
           }),
@@ -62,7 +95,7 @@ describe("PATCH /api/v1/users/[username]", () => {
       });
     });
 
-    test("should return 400 when sending a malformed JSON", async () => {
+    test("should return 400 when sending malformed JSON", async () => {
       const { response, body } = await orchestrator.request(
         "/api/v1/users/AnyUser",
         {
@@ -76,7 +109,7 @@ describe("PATCH /api/v1/users/[username]", () => {
 
       expect(body).toEqual({
         name: "ValidationError",
-        message: "The request body does not contain a valid JSON.",
+        message: "The request body does not contain valid JSON.",
         action:
           "Please check the syntax of the submitted JSON or ensure the request body is not empty.",
         status_code: 400,
@@ -127,9 +160,10 @@ describe("PATCH /api/v1/users/[username]", () => {
     });
 
     test("should not update to an email that is already in use by another user", async () => {
-      const created_user = await orchestrator.createUser({
+      const created_user = await orchestrator.createActivatedUser({
         email: "first_Jimmy_five@email.testemail",
       });
+      const sessionObject = await orchestrator.createSession(created_user.id);
 
       const created_user2 = await orchestrator.createUser({
         email: "second_Jimmy_five@email.testemail",
@@ -139,7 +173,10 @@ describe("PATCH /api/v1/users/[username]", () => {
         `/api/v1/users/${created_user.username}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
           body: JSON.stringify({
             email: created_user2.email,
           }),
@@ -156,14 +193,19 @@ describe("PATCH /api/v1/users/[username]", () => {
     });
 
     test("should not update to a username that is already in use by another user", async () => {
-      const created_user = await orchestrator.createUser();
+      const created_user = await orchestrator.createActivatedUser();
+      const sessionObject = await orchestrator.createSession(created_user.id);
+
       const created_user2 = await orchestrator.createUser();
 
       const { response, body } = await orchestrator.request(
         `/api/v1/users/${created_user.username}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
           body: JSON.stringify({
             username: created_user2.username,
           }),
@@ -179,16 +221,117 @@ describe("PATCH /api/v1/users/[username]", () => {
       });
     });
 
-    test("should successfully update the password when sent in the PATCH body", async () => {
-      const created_user = await orchestrator.createUser();
+    test("should not update the username of another user", async () => {
+      const created_user = await orchestrator.createActivatedUser();
+      const sessionObject = await orchestrator.createSession(created_user.id);
+
+      const created_user2 = await orchestrator.createUser();
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/users/${created_user2.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: `${created_user2.username}_jimmy_five`,
+          }),
+        },
+      );
+
+      expect(response.status).toBe(403);
+      expect(body).toEqual({
+        name: "ForbiddenError",
+        message: "You do not have permission to update another user.",
+        action:
+          "Please verify that you have the required feature to update another user.",
+        status_code: 403,
+      });
+    });
+
+    test("should not update an existing user with weak password data", async () => {
+      const created_user = await orchestrator.createActivatedUser({
+        password: "1first_Password",
+      });
+      const sessionObject = await orchestrator.createSession(created_user.id);
 
       const { response, body } = await orchestrator.request(
         `/api/v1/users/${created_user.username}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
           body: JSON.stringify({
-            password: "NewSecurePassword@456",
+            password: `@Jimmy_Five`,
+          }),
+        },
+      );
+
+      expect(response.status).toBe(400);
+
+      expect(body).toEqual({
+        name: "ValidationError",
+        message: "The password provided is too weak.",
+        action:
+          "Please provide a password with at least 8 characters, including at least one number and one special character.",
+        status_code: 400,
+      });
+    });
+
+    test("should update an existing user with valid username data", async () => {
+      const created_user = await orchestrator.createActivatedUser();
+      const sessionObject = await orchestrator.createSession(created_user.id);
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/users/${created_user.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: `${created_user.username}_jimmy_five`,
+          }),
+        },
+      );
+
+      expect(response.status).toBe(200);
+
+      expect(body).toEqual({
+        id: body.id,
+        username: `${created_user.username}_jimmy_five`,
+        features: ["create:session", "read:session", "update:user"],
+        created_at: body.created_at,
+        updated_at: body.updated_at,
+      });
+
+      expect(uuidVersion(body.id)).toBe(4);
+      expect(Date.parse(body.created_at)).not.toBe(NaN);
+
+      expect(new Date(body.updated_at).getTime()).toBeGreaterThan(
+        new Date(body.created_at).getTime(),
+      );
+    });
+
+    test("should update an existing user with valid email data", async () => {
+      const created_user = await orchestrator.createActivatedUser();
+      const sessionObject = await orchestrator.createSession(created_user.id);
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/users/${created_user.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
+          body: JSON.stringify({
+            email: `${created_user.email}.jimmyfive`,
           }),
         },
       );
@@ -198,50 +341,94 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(body).toEqual({
         id: body.id,
         username: created_user.username,
-        email: created_user.email,
-        password: body.password,
-        features: ["read:activation_token"],
+        features: ["create:session", "read:session", "update:user"],
         created_at: body.created_at,
         updated_at: body.updated_at,
       });
 
+      expect(uuidVersion(body.id)).toBe(4);
+      expect(Date.parse(body.created_at)).not.toBe(NaN);
+
+      expect(new Date(body.updated_at).getTime()).toBeGreaterThan(
+        new Date(body.created_at).getTime(),
+      );
+    });
+
+    test("should update an existing user with valid password data", async () => {
+      const created_user = await orchestrator.createActivatedUser({
+        password: "1first_Password",
+      });
+      const sessionObject = await orchestrator.createSession(created_user.id);
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/users/${created_user.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
+          body: JSON.stringify({
+            password: `@Jimmy_Fiv3`,
+          }),
+        },
+      );
+
+      expect(response.status).toBe(200);
+
+      expect(body).toEqual({
+        id: body.id,
+        username: created_user.username,
+        features: ["create:session", "read:session", "update:user"],
+        created_at: body.created_at,
+        updated_at: body.updated_at,
+      });
+
+      expect(uuidVersion(body.id)).toBe(4);
+      expect(Date.parse(body.created_at)).not.toBe(NaN);
+
+      expect(new Date(body.updated_at).getTime()).toBeGreaterThan(
+        new Date(body.created_at).getTime(),
+      );
+
       const userInDatabase = await user.findOneByUsername(
         created_user.username,
       );
-
-      const newPasswordWorks = await password.compare(
-        "NewSecurePassword@456",
-        userInDatabase.password,
-      );
-      expect(newPasswordWorks).toBe(true);
-
-      const oldPasswordStillWorks = await password.compare(
-        created_user.password,
+      const correctPasswordMatch = await password.compare(
+        "@Jimmy_Fiv3",
         userInDatabase.password,
       );
 
-      expect(oldPasswordStillWorks).toBe(false);
+      expect(correctPasswordMatch).toBe(true);
+
+      const incorrectPasswordMatch = await password.compare(
+        "firstPassword",
+        userInDatabase.password,
+      );
+
+      expect(incorrectPasswordMatch).toBe(false);
     });
 
     test("should update an existing user with valid data", async () => {
-      await orchestrator.request("/api/v1/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: "OriginalJimmyFive",
-          email: "original_jimmy_five@host.testemail",
-          password: "Test@123",
-        }),
+      const created_user = await orchestrator.createActivatedUser({
+        username: "OriginalJimmyFive",
+        email: "original_jimmy_five@host.testemail",
+        password: "Test@123",
       });
+      const sessionObject = await orchestrator.createSession(created_user.id);
 
       const { response, body } = await orchestrator.request(
         "/api/v1/users/OriginalJimmyFive",
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
           body: JSON.stringify({
             username: "updated_Jimmy_Five",
             email: "updated_jimmy_five@host.testemail",
+            password: "1_update@Password",
           }),
         },
       );
@@ -251,10 +438,68 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(body).toEqual({
         id: body.id,
         username: "updated_jimmy_five",
-        email: "updated_jimmy_five@host.testemail",
+        features: ["create:session", "read:session", "update:user"],
+        created_at: body.created_at,
+        updated_at: body.updated_at,
+      });
+
+      expect(uuidVersion(body.id)).toBe(4);
+      expect(Date.parse(body.created_at)).not.toBe(NaN);
+
+      expect(new Date(body.updated_at).getTime()).toBeGreaterThan(
+        new Date(body.created_at).getTime(),
+      );
+
+      const userInDatabase = await user.findOneByUsername("updated_jimmy_five");
+      const correctPasswordMatch = await password.compare(
+        "1_update@Password",
+        userInDatabase.password,
+      );
+
+      expect(correctPasswordMatch).toBe(true);
+
+      const incorrectPasswordMatch = await password.compare(
+        "Test@123",
+        userInDatabase.password,
+      );
+
+      expect(incorrectPasswordMatch).toBe(false);
+    });
+  });
+
+  describe("Privileged user", () => {
+    test("should update the username of another user", async () => {
+      const privilegedUser = await orchestrator.createActivatedUser();
+
+      await orchestrator.addFeaturesToUser(privilegedUser, [
+        "update:user:others",
+      ]);
+
+      const sessionObject = await orchestrator.createSession(privilegedUser.id);
+
+      const defaultUser = await orchestrator.createUser();
+
+      const { response, body } = await orchestrator.request(
+        `/api/v1/users/${defaultUser.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `${session.COOKIE_NAME}=${sessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: `${defaultUser.username}_jimmy_five`,
+          }),
+        },
+      );
+
+      expect(response.status).toBe(200);
+      expect(body).toEqual({
+        id: defaultUser.id,
+        username: `${defaultUser.username}_jimmy_five`,
         password: body.password,
         features: ["read:activation_token"],
-        created_at: body.created_at,
+        created_at: defaultUser.created_at.toISOString(),
         updated_at: body.updated_at,
       });
 

@@ -30,8 +30,6 @@ describe("POST /api/v1/users", () => {
       expect(body).toEqual({
         id: body.id,
         username: "jimmyfive",
-        email: "jimmyfive@host.testemail",
-        password: body.password,
         features: ["read:activation_token"],
         created_at: body.created_at,
         updated_at: body.updated_at,
@@ -154,7 +152,7 @@ describe("POST /api/v1/users", () => {
       expect(body).toEqual({
         name: "ForbiddenError",
         message: "You do not have permission to perform this action.",
-        action: "Please check if your user has the 'create:user' feature.",
+        action: "Please verify that your user has the 'create:user' feature.",
         status_code: 403,
       });
     });

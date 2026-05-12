@@ -122,6 +122,11 @@ async function setFeatures(userId, features) {
   return updatedUser;
 }
 
+async function addFeatures(userId, features) {
+  const updatedUser = await userRepository.addFeatures(userId, features);
+  return updatedUser;
+}
+
 const user = {
   create,
   findOneByUsername,
@@ -129,6 +134,7 @@ const user = {
   findOneById,
   updateByUsername,
   setFeatures,
+  addFeatures,
 };
 
 export default user;
